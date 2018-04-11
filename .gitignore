@@ -40,3 +40,4 @@ modules.xml
 Thumbs.db
 
 # Specific to our project: 
+datasets/
