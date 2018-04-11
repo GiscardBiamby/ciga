@@ -10,6 +10,8 @@ dependencies:
     - matplotlib
     - pydot
     - graphviz
+    - Pillow
+    - tensorflow-gpu
     - pip:
       - twilio
       - graphviz
