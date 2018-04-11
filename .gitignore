@@ -1,0 +1,42 @@
+# Most of the ignore settings are based off of: https://github.com/github/gitignore/blob/master/Python.gitignore 
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+
+# pyenv
+.python-version
+
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Misc: 
+__pycache__
+
+
+# Some settings grabbed from previous 194 assignments: 
+*.swp
+*.pyc
+.env/*
+
+# IDE / code editors: 
+.idea
+*.iws
+modules.xml
+*.ipr
+*.sublime-project
+*.sublime-workspace
+.RHistory
+
+# OS 
+.DS_Store
+Thumbs.db
+
+# Specific to our project: 
