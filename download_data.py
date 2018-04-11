@@ -48,7 +48,13 @@ def downloadFile(url, filepath, checksum):
         shutil.copyfileobj(response, targetfile)
     return verifyChecksum(filepath, checksum)
 
-def extractFile(filepath, extract_path):
+def extractFile(filepath, filename, extract_path):
+    # A text file for each archive is saved to indicate that it's already been extracted.
+    extractedMarker = os.path.join(extract_path, filename + ".extracted.txt")
+    if os.path.exists(extractedMarker):
+        print("File has already been extracted. To force re-extraction, delete the file: '{}'".format(extractedMarker))
+        return
+
     if not os.path.exists(extract_path):
         os.makedirs(extract_path)
 
@@ -57,6 +63,13 @@ def extractFile(filepath, extract_path):
     with tarfile.open(filepath) as tar:
        tar.extractall(path = extract_path)
 
+    # Mark that the file has been extracted, so we don't try to do it again if this code gets run again:
+    open(extractedMarker, 'a').close()
+
+def createFolders(dirs):
+    for dir in dirs:
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
 def getDataset(name, urls):
     """
@@ -65,21 +78,21 @@ def getDataset(name, urls):
     :return:
     """
     dataset_dir = os.path.join(os.getcwd(), "datasets")
-    if not os.path.exists(dataset_dir):
-        os.makedirs(dataset_dir)
+    rawdata_dir = os.path.join(dataset_dir, "raw")
+    processed_dir = os.path.join(dataset_dir, "processed")
+    createFolders([dataset_dir, rawdata_dir, processed_dir])
 
     # Download:
     for url, filename, checksum in urls:
-        filepath = os.path.join(dataset_dir, filename)
+        filepath = os.path.join(rawdata_dir, filename)
         if not isFileDownloaded(filepath, checksum):
             downloadSuccess = downloadFile(url, filepath, checksum)
             if not downloadSuccess:
                 raise IOError("Failed to download '{}'!".format(url))
-            extract_dir = os.path.join(dataset_dir, filename.replace(".tar.gz", "").replace(".tar", ""))
-            extractFile(filepath, extract_dir)
+        extract_dir = os.path.join(rawdata_dir, filename.replace(".tar.gz", "").replace(".tar", ""))
+        extractFile(filepath, filename, extract_dir)
 
 def getDatasets(wiki=True, imdbFull=False, imdbSmall=False):
-
 
     ## Wiki images & metadata:
     wiki_dataset = [
