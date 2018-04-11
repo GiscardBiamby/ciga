@@ -1,6 +1,8 @@
 name: ciga
 dependencies:
     - python==3.6
+    - jupyter 
+    - jupyterlab
     - numpy
     - scipy
     - pandas
@@ -8,3 +10,6 @@ dependencies:
     - matplotlib
     - pydot
     - graphviz
+    - pip:
+      - twilio
+      - graphviz

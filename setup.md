@@ -6,6 +6,12 @@ Our project uses python virtual env named "ciga". To create the environment and 
 conda env create -f environment.yml
 ```
 
+If environment.yml gets updated, you'll need to update your environment. In which case you can run: 
+
+```bash
+conda env update -f environment.yml
+```
+
 #### 1b. (Optional) Install direnv
 
 https://direnv.net/
