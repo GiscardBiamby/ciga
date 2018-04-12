@@ -11,7 +11,7 @@ dependencies:
     - pydot
     - graphviz
     - Pillow
-    - tensorflow-gpu
     - pip:
       - twilio
       - graphviz
+      - tensorflow-gpu
