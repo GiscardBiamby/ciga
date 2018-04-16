@@ -5,6 +5,7 @@ import hashlib
 import os.path
 import sys, argparse, logging
 import tarfile
+import os, equests
 
 def verifyChecksum(filepath, checksum):
     """
@@ -13,6 +14,8 @@ def verifyChecksum(filepath, checksum):
     :param checksum: expected checksum
     :return: True if file checksum matches the supplied checksum. False o/w.
     """
+    if checksum is None:
+        return True
     chunksize_bytes = 128*10
     hasher = hashlib.md5()
 
@@ -44,8 +47,15 @@ def isFileDownloaded(filepath, checksum):
 
 def downloadFile(url, filepath, checksum):
     print("Downloading {}...".format(url))
-    with ulib.urlopen(url) as response, open(filepath, "wb") as targetfile:
-        shutil.copyfileobj(response, targetfile)
+    if checksum is None:
+        r = requests.get(url, auth=("adiencedb","adience"))
+        if r.status_code == 200:
+            with open(filepath, "wb") as out:
+                for bits in r.iter_content():
+                    out.write(bits)
+    else:
+        with ulib.urlopen(url) as response, open(filepath, "wb") as targetfile:
+            shutil.copyfileobj(response, targetfile)
     return verifyChecksum(filepath, checksum)
 
 def extractFile(filepath, filename, extract_path):
@@ -92,7 +102,7 @@ def getDataset(name, urls):
         extract_dir = os.path.join(rawdata_dir, filename.replace(".tar.gz", "").replace(".tar", ""))
         extractFile(filepath, filename, extract_dir)
 
-def getDatasets(wiki=True, imdbFull=False, imdbSmall=False):
+def getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False):
 
     ## Wiki images & metadata:
     wiki_dataset = [
@@ -122,12 +132,41 @@ def getDatasets(wiki=True, imdbFull=False, imdbSmall=False):
         , ("https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/imdb_crop.tar", "imdb_crop.tar", "44b7548f288c14397cb7a7bab35ebe14")
     ]
 
+    ## Adience images + labels:
+    adience_dataset = [
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_0_data.txt", "old_fold_0_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_1_data.txt", "old_fold_1_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_2_data.txt", "old_fold_2_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_3_data.txt", "old_fold_3_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_4_data.txt", "old_fold_4_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_0_data.txt", "old_fold_frontal_0_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_1_data.txt", "old_fold_frontal_1_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_2_data.txt", "old_fold_frontal_2_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_3_data.txt", "old_fold_frontal_3_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_4_data.txt", "old_fold_frontal_4_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/LICENSE.txt", "LICENSE.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/aligned.tar.gz", "aligned.tar.gz", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/faces.tar.gz", "faces.tar.gz", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_0_data.txt", "fold_0_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_1_data.txt", "fold_1_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_2_data.txt", "fold_2_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_3_data.txt", "fold_3_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_4_data.txt", "fold_4_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_0_data.txt", "fold_frontal_0_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_1_data.txt", "fold_frontal_1_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_2_data.txt", "fold_frontal_2_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_3_data.txt", "fold_frontal_3_data.txt", None),
+    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_4_data.txt", "fold_frontal_4_data.txt", None)
+    ]
+
     if wiki:
         getDataset("wiki", wiki_dataset)
     if imdbFull:
         getDataset("imdb", imdb_full_dataset)
     if imdbSmall:
         getDataset("imdb", imdb_concise_dataset)
+    if adience:
+        getDataset("adience", adience_dataset)
 
 if __name__ == '__main__':
-    getDatasets(wiki=True, imdbFull=False, imdbSmall=False)
+    getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False)
