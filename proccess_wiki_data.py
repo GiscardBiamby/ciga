@@ -102,46 +102,51 @@ def make_wiki_age_dataset(data, age_partitions):
 		copy_data(train, class_name, wiki_path, train_directory)
 		copy_data(validate, class_name, wiki_path, valid_directory)
 
-# def make_wiki_age_gender_dataset(data, age_partitions):
-# 	train_directory = './datasets/processed/wiki/age_gender/train/'
-# 	valid_directory = './datasets/processed/wiki/age_gender/valid/'
+def make_wiki_age_gender_dataset(data, age_partitions):
+	train_directory = './datasets/processed/wiki/age_gender/train/'
+	valid_directory = './datasets/processed/wiki/age_gender/valid/'
 
-# 	genders = ['male', 'female']
+	genders = ['female', 'male']
 
-# 	for i in range(len(genders)):
-# 		gender = genders[i]
-# 		by_gender = data[data['gender'] == i]
-# 		for age_partition in age_partitions:
-# 			lower, upper = age_partition
-# 			class_name = gender + '_' +str(lower) + '-' + str(upper)
+	for i in range(len(genders)):
+		gender = genders[i]
+		by_gender = data[data['gender'] == i]
+		for age_partition in age_partitions:
+			lower, upper = age_partition
+			class_name = gender + '_' +str(lower) + '-' + str(upper)
 
-			# # Train:
-			# if not os.path.exists(train_directory + class_name):
-			#     os.makedirs(train_directory + class_name)
-			# # Validate:
-			# if not os.path.exists(valid_directory + class_name):
-			#     os.makedirs(valid_directory + class_name)
+			# Train:
+			if not os.path.exists(train_directory + class_name):
+			    os.makedirs(train_directory + class_name)
+			# Validate:
+			if not os.path.exists(valid_directory + class_name):
+			    os.makedirs(valid_directory + class_name)
 
-			# mask = (by_gender['age'] > lower) & (by_gender['age'] < upper)
-			# masked = by_gender[mask]
+			age_mask = (by_gender['age'] > lower) & (by_gender['age'] < upper)
+			masked = by_gender[age_mask]
 
+			num_samples = masked.shape[0]
+			thresh = num_samples // valid_percent
+			train, validate = masked[thresh:], masked[:thresh]
 
-			# num_samples = masked.shape[0]
-			# thresh = num_samples // valid_percent
-			# train, validate = masked[thresh:], masked[:thresh]
-
-			# copy_data(train, class_name, wiki_path, train_directory)
-			# copy_data(validate, class_name, wiki_path, valid_directory)
-
+			copy_data(train, class_name, wiki_path, train_directory)
+			copy_data(validate, class_name, wiki_path, valid_directory)
 
 
 
 
-proccesed_data = proccess_wiki_mat('./datasets/raw/wiki/wiki/wiki.mat')
-make_wiki_gender_dataset(proccesed_data)
-age_partitions = [[0,2], [4,6], [8,13], [15,20], [25,32], [38,43], [48,53], [60, 130]]
-make_wiki_age_dataset(proccesed_data, age_partitions)
-# make_wiki_age_gender_dataset(proccesed_data, age_partitions)
+def create_wiki_datasets(age=True, gender=True, gender_age=True):
+	proccesed_data = proccess_wiki_mat('./datasets/raw/wiki/wiki/wiki.mat')
+	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 130]]
+	if age:
+		make_wiki_gender_dataset(proccesed_data)
+	if gender:
+		make_wiki_age_dataset(proccesed_data, age_partitions)
+	if gender_age:
+		make_wiki_age_gender_dataset(proccesed_data, age_partitions)
+
+if __name__ == '__main__':
+	create_wiki_datasets(age=False, gender=False, gender_age=False)
 
 
 
