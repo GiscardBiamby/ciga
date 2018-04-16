@@ -5,7 +5,7 @@ import hashlib
 import os.path
 import sys, argparse, logging
 import tarfile
-import os, equests
+import os, requests
 
 def verifyChecksum(filepath, checksum):
     """
@@ -53,10 +53,11 @@ def downloadFile(url, filepath, checksum):
             with open(filepath, "wb") as out:
                 for bits in r.iter_content():
                     out.write(bits)
+        return True
     else:
         with ulib.urlopen(url) as response, open(filepath, "wb") as targetfile:
             shutil.copyfileobj(response, targetfile)
-    return verifyChecksum(filepath, checksum)
+        return verifyChecksum(filepath, checksum)
 
 def extractFile(filepath, filename, extract_path):
     # A text file for each archive is saved to indicate that it's already been extracted.
@@ -100,7 +101,8 @@ def getDataset(name, urls):
             if not downloadSuccess:
                 raise IOError("Failed to download '{}'!".format(url))
         extract_dir = os.path.join(rawdata_dir, filename.replace(".tar.gz", "").replace(".tar", ""))
-        extractFile(filepath, filename, extract_dir)
+        if not os.path.splitext(filepath)[1] == '.txt':
+            extractFile(filepath, filename, extract_dir)
 
 def getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False):
 
@@ -169,4 +171,4 @@ def getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False):
         getDataset("adience", adience_dataset)
 
 if __name__ == '__main__':
-    getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False)
+    getDatasets(wiki=False, imdbFull=False, imdbSmall=False, adience=True)
