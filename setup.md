@@ -35,4 +35,11 @@ This will download and extract the datasets if you don't already have them.
 The files are extracted into `./<project-root>/datasets/<filename>/*`, where ``<filename>` is the name of the corresponding downloaded archive (minus file extension). 
 
 
+## 3. Process Datasets
 
+### Partition Adience Data:
+
+```bash
+cd datasets
+python populate_subfolders.py
+```
