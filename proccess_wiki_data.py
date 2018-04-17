@@ -6,7 +6,7 @@ from shutil import copyfile
 from datetime import datetime, timedelta
 
 wiki_path = './datasets/raw/wiki_crop/wiki_crop/'
-valid_percent = 10
+valid_ration = 10
 
 def mat_date_convert(mat_date):
     return (timedelta(days=mat_date - 366) + datetime(1, 1, 1)).year
@@ -70,13 +70,16 @@ def make_wiki_gender_dataset(data):
 	female_samples = data[data['gender'] == 0]
 	male_samples = data[data['gender'] == 1]
 
-	train_female, val_female = female_samples[num_samples//valid_percent:num_samples], female_samples[:num_samples//valid_percent]
-	train_male, val_male = male_samples[num_samples//valid_percent:num_samples], male_samples[:num_samples//valid_percent]
+	train_female, val_female = female_samples[num_samples//valid_ration:num_samples], female_samples[:num_samples//valid_ration]
+	train_male, val_male = male_samples[num_samples//valid_ration:num_samples], male_samples[:num_samples//valid_ration]
 
 	copy_data(train_female, 'female', wiki_path, train_directory, num_samples)
 	copy_data(val_female, 'female', wiki_path, valid_directory, num_samples)
 	copy_data(train_male, 'male', wiki_path, train_directory, num_samples)
 	copy_data(val_male, 'male', wiki_path, valid_directory, num_samples)
+
+	print('male training:', len(train_male), 'validation:', len(val_male))
+	print('female training:', len(train_female), 'validation:', len(val_female))
 
 def make_wiki_age_dataset(data, age_partitions):
 	train_directory = './datasets/processed/wiki/age/train/'
@@ -96,10 +99,12 @@ def make_wiki_age_dataset(data, age_partitions):
 		mask = (data['age'] > lower) & (data['age'] < upper)
 		masked = data[mask]
 		num_samples = masked.shape[0]
-		thresh = num_samples // valid_percent
+		thresh = num_samples // valid_ration
 		train, validate = masked[thresh:], masked[:thresh]
 		copy_data(train, class_name, wiki_path, train_directory)
 		copy_data(validate, class_name, wiki_path, valid_directory)
+
+		print(class_name, 'training:', len(train), 'validation:', len(validate))
 
 def make_wiki_age_gender_dataset(data, age_partitions):
 	train_directory = './datasets/processed/wiki/age_gender/train/'
@@ -125,11 +130,12 @@ def make_wiki_age_gender_dataset(data, age_partitions):
 			masked = by_gender[age_mask]
 
 			num_samples = masked.shape[0]
-			thresh = num_samples // valid_percent
+			thresh = num_samples // valid_ration
 			train, validate = masked[thresh:], masked[:thresh]
-
 			copy_data(train, class_name, wiki_path, train_directory)
 			copy_data(validate, class_name, wiki_path, valid_directory)
+
+			print(class_name, 'training:', len(train), 'validation:', len(validate))
 
 
 def create_wiki_datasets(age=True, gender=True, gender_age=True):
@@ -137,10 +143,16 @@ def create_wiki_datasets(age=True, gender=True, gender_age=True):
 	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 130]]
 	if age:
 		make_wiki_gender_dataset(proccesed_data)
+		print("Done creating gender dataset")
+		print('=================================================================')
 	if gender:
 		make_wiki_age_dataset(proccesed_data, age_partitions)
+		print("Done creating age dataset")
+		print('=================================================================')
 	if gender_age:
 		make_wiki_age_gender_dataset(proccesed_data, age_partitions)
+		print("Done creating age+gender dataset")
+		print('=================================================================')
 
 if __name__ == '__main__':
-	create_wiki_datasets(age=False, gender=False, gender_age=False)
+	create_wiki_datasets(age=True, gender=True, gender_age=True)
