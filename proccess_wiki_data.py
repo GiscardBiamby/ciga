@@ -32,7 +32,6 @@ def proccess_wiki_mat(path):
 	for i in raw:
 	    data.append(i)
 	data = np.array(data)
-
 	data = data.squeeze()
 
 	data = data.T
@@ -133,8 +132,6 @@ def make_wiki_age_gender_dataset(data, age_partitions):
 			copy_data(validate, class_name, wiki_path, valid_directory)
 
 
-
-
 def create_wiki_datasets(age=True, gender=True, gender_age=True):
 	proccesed_data = proccess_wiki_mat('./datasets/raw/wiki/wiki/wiki.mat')
 	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 130]]
@@ -147,28 +144,3 @@ def create_wiki_datasets(age=True, gender=True, gender_age=True):
 
 if __name__ == '__main__':
 	create_wiki_datasets(age=False, gender=False, gender_age=False)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
