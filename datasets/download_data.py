@@ -45,14 +45,13 @@ def isFileDownloaded(filepath, checksum):
 
     return verifyChecksum(filepath, checksum)
 
-def downloadFile(url, filepath, checksum):
+def downloadFile(url, filepath, checksum, requiresAuth):
     print("Downloading {}...".format(url))
-    if checksum is None:
+    if not requiresAuth:
         r = requests.get(url, auth=("adiencedb","adience"))
         if r.status_code == 200:
             with open(filepath, "wb") as out:
-                for bits in r.iter_content():
-                    out.write(bits)
+                out.write(r.content)
         return True
     else:
         with ulib.urlopen(url) as response, open(filepath, "wb") as targetfile:
@@ -60,6 +59,7 @@ def downloadFile(url, filepath, checksum):
         return verifyChecksum(filepath, checksum)
 
 def extractFile(filepath, filename, extract_path):
+    print("Extracting path:{}, name:{}, extract_path:{}".format(filepath, filename, extract_path))
     # A text file for each archive is saved to indicate that it's already been extracted.
     extractedMarker = os.path.join(extract_path, filename + ".extracted.txt")
     if os.path.exists(extractedMarker):
@@ -88,18 +88,21 @@ def getDataset(name, urls):
     :param urls: an array of tuples. Each tuple has 3 elements in the format (url, target_filename, expected_checksum)
     :return:
     """
-    dataset_dir = os.path.join(os.getcwd(), "datasets")
+    dataset_dir = os.getcwd()
     rawdata_dir = os.path.join(dataset_dir, "raw")
     processed_dir = os.path.join(dataset_dir, "processed")
     createFolders([dataset_dir, rawdata_dir, processed_dir])
 
-    # Download:
     for url, filename, checksum in urls:
         filepath = os.path.join(rawdata_dir, filename)
+
+        # Download:
         if not isFileDownloaded(filepath, checksum):
-            downloadSuccess = downloadFile(url, filepath, checksum)
+            downloadSuccess = downloadFile(url, filepath, checksum, not "Hassner/adiencedb" in url)
             if not downloadSuccess:
                 raise IOError("Failed to download '{}'!".format(url))
+
+        # Extract:
         extract_dir = os.path.join(rawdata_dir, filename.replace(".tar.gz", "").replace(".tar", ""))
         if not os.path.splitext(filepath)[1] == '.txt':
             extractFile(filepath, filename, extract_dir)
@@ -136,29 +139,29 @@ def getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False):
 
     ## Adience images + labels:
     adience_dataset = [
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_0_data.txt", "old_fold_0_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_1_data.txt", "old_fold_1_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_2_data.txt", "old_fold_2_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_3_data.txt", "old_fold_3_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_4_data.txt", "old_fold_4_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_0_data.txt", "old_fold_frontal_0_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_1_data.txt", "old_fold_frontal_1_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_2_data.txt", "old_fold_frontal_2_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_3_data.txt", "old_fold_frontal_3_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_4_data.txt", "old_fold_frontal_4_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/LICENSE.txt", "LICENSE.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/aligned.tar.gz", "aligned.tar.gz", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/faces.tar.gz", "faces.tar.gz", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_0_data.txt", "fold_0_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_1_data.txt", "fold_1_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_2_data.txt", "fold_2_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_3_data.txt", "fold_3_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_4_data.txt", "fold_4_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_0_data.txt", "fold_frontal_0_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_1_data.txt", "fold_frontal_1_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_2_data.txt", "fold_frontal_2_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_3_data.txt", "fold_frontal_3_data.txt", None),
-    ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_4_data.txt", "fold_frontal_4_data.txt", None)
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_0_data.txt", "old_fold_0_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_1_data.txt", "old_fold_1_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_2_data.txt", "old_fold_2_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_3_data.txt", "old_fold_3_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_4_data.txt", "old_fold_4_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_0_data.txt", "old_fold_frontal_0_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_1_data.txt", "old_fold_frontal_1_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_2_data.txt", "old_fold_frontal_2_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_3_data.txt", "old_fold_frontal_3_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/(old%20a)%20fold_frontal_4_data.txt", "old_fold_frontal_4_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/LICENSE.txt", "LICENSE.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/aligned.tar.gz", "aligned.tar.gz", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/faces.tar.gz", "faces.tar.gz", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_0_data.txt", "fold_0_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_1_data.txt", "fold_1_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_2_data.txt", "fold_2_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_3_data.txt", "fold_3_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_4_data.txt", "fold_4_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_0_data.txt", "fold_frontal_0_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_1_data.txt", "fold_frontal_1_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_2_data.txt", "fold_frontal_2_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_3_data.txt", "fold_frontal_3_data.txt", None),
+        ("http://www.cslab.openu.ac.il/personal/Hassner/adiencedb/AdienceBenchmarkOfUnfilteredFacesForGenderAndAgeClassification/fold_frontal_4_data.txt", "fold_frontal_4_data.txt", None)
     ]
 
     if wiki:
@@ -171,4 +174,4 @@ def getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False):
         getDataset("adience", adience_dataset)
 
 if __name__ == '__main__':
-    getDatasets(wiki=False, imdbFull=False, imdbSmall=False, adience=True)
+    getDatasets(wiki=True, imdbFull=False, imdbSmall=True, adience=True)

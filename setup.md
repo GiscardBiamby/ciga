@@ -24,6 +24,7 @@ You may have to run `direnv allow .` the first time (or whenever .envrc changes,
 Run the following command (only tested w/ Python 3.6, e.g., "ciga" virtual env): 
 
 ```bash
+cd datasets
 python download_data.py
 ```
 
