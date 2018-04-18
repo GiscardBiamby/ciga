@@ -174,4 +174,4 @@ def getDatasets(wiki=True, imdbFull=False, imdbSmall=False, adience=False):
         getDataset("adience", adience_dataset)
 
 if __name__ == '__main__':
-    getDatasets(wiki=True, imdbFull=False, imdbSmall=True, adience=True)
+    getDatasets(wiki=False, imdbFull=False, imdbSmall=True, adience=False)
