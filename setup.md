@@ -24,6 +24,7 @@ You may have to run `direnv allow .` the first time (or whenever .envrc changes,
 Run the following command (only tested w/ Python 3.6, e.g., "ciga" virtual env): 
 
 ```bash
+cd datasets
 python download_data.py
 ```
 
@@ -34,4 +35,11 @@ This will download and extract the datasets if you don't already have them.
 The files are extracted into `./<project-root>/datasets/<filename>/*`, where ``<filename>` is the name of the corresponding downloaded archive (minus file extension). 
 
 
+## 3. Process Datasets
 
+### Partition Adience Data:
+
+```bash
+cd datasets
+python populate_subfolders.py
+```

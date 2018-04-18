@@ -7,7 +7,6 @@ dependencies:
     - scipy
     - pandas
     - keras=2.1.5
-    - tensorflow
     - matplotlib
     - pydot
     - graphviz
@@ -15,3 +14,4 @@ dependencies:
     - pip:
       - twilio
       - graphviz
+      - tensorflow-gpu=1.7.0
