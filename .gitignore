@@ -42,5 +42,5 @@ Thumbs.db
 # Specific to our project: 
 datasets/raw/
 datasets/processed/
-datasets/equal/
+datasets/equal_data/
 *.backup
