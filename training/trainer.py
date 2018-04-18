@@ -8,7 +8,7 @@ from models.resnet import resnetBuilder
 
 
 # Maybe this should go into it's own file and/or class
-def generatorsBuilder(dataset_path, img_size=(50, 50), batch_size=32, grayscale=True):
+def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
     train_data_dir = dataset_path + 'train/'
     valid_data_dir = dataset_path + 'valid/'
 
@@ -22,7 +22,7 @@ def generatorsBuilder(dataset_path, img_size=(50, 50), batch_size=32, grayscale=
 
     train_generator = train_datagen.flow_from_directory(train_data_dir,
                                                         color_mode=color_mode,
-                                                        target_size=img_size,
+                                                        target_size=img_dims,
                                                         batch_size=batch_size,
                                                         class_mode='categorical')
 
@@ -31,7 +31,7 @@ def generatorsBuilder(dataset_path, img_size=(50, 50), batch_size=32, grayscale=
 
     valid_generator = valid_datagen.flow_from_directory(valid_data_dir,
                                                         color_mode=color_mode,
-                                                        target_size=img_size,
+                                                        target_size=img_dims,
                                                         batch_size=batch_size,
                                                         class_mode='categorical')
     return train_generator, valid_generator
@@ -52,7 +52,7 @@ class BasicTrainer(object):
         if (self.enable_checkpoints):
             self.callbacks.append(
                 ModelCheckpoint(
-                    filepath='./weights/{}.hdf5'.format(strftime("%a_%d_%b_%Y_%H_%M_%S"))
+                    filepath='./weights/{}-{}.hdf5'.format(self.model.name, strftime("%a_%d_%b_%Y_%H_%M_%S"))
                     , verbose=1
                     , save_best_only=True
                 )
@@ -96,7 +96,12 @@ class BasicTrainer(object):
         num_valid = validation_generator.samples
         num_train = train_generator.samples
 
-        self.model.compile(optimizer='adam',
+        # Default to Adam if config doesn't specify an optimizer:
+        optimizer = "adam"
+        if ("optimizer" in self.config and self.config["optimizer"] is not None):
+            optimizer = self.config["optimizer"]
+
+        self.model.compile(optimizer=optimizer,
                     loss='categorical_crossentropy',
                     metrics=['accuracy'])
 
@@ -116,7 +121,7 @@ class BasicTrainer(object):
 ## TODO: Move the actual training code to another file:
 def trainResnet():
 
-    path = './datasets/processed/wiki/age/'
+    path = '../datasets/processed/wiki/age/'
     img_size = (50, 50)
     batch_size = 32
     grayscale = True
@@ -125,7 +130,7 @@ def trainResnet():
     # Build data generator:
     num_channels = 1 if grayscale else 3
     train_generator, validation_generator = generatorsBuilder(
-        path, img_size=img_size, batch_size=batch_size, grayscale=grayscale
+        path, img_dims=img_size, batch_size=batch_size, grayscale=grayscale
     )
 
     # Build Model:
