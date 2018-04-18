@@ -45,6 +45,10 @@ def proccess_wiki_mat(path):
 	df = df[pd.isnull(df['second_face_score'])]
 
 	df['age'] = df['photo_taken'] - df['dob'].apply(mat_date_convert)
+
+	mask = (df['age'] >= 0) & (df['age'] <= 130)
+	df = df[mask]
+
 	return df[['full_path', 'gender', 'age']]
 
 def make_wiki_gender_dataset(data):
@@ -96,7 +100,7 @@ def make_wiki_age_dataset(data, age_partitions):
 		if not os.path.exists(valid_directory + class_name):
 		    os.makedirs(valid_directory + class_name)
 
-		mask = (data['age'] > lower) & (data['age'] < upper)
+		mask = (data['age'] >= lower) & (data['age'] <= upper)
 		masked = data[mask]
 		num_samples = masked.shape[0]
 		thresh = num_samples // valid_ration
@@ -126,7 +130,7 @@ def make_wiki_age_gender_dataset(data, age_partitions):
 			if not os.path.exists(valid_directory + class_name):
 			    os.makedirs(valid_directory + class_name)
 
-			age_mask = (by_gender['age'] > lower) & (by_gender['age'] < upper)
+			age_mask = (by_gender['age'] >= lower) & (by_gender['age'] <= upper)
 			masked = by_gender[age_mask]
 
 			num_samples = masked.shape[0]
@@ -140,7 +144,7 @@ def make_wiki_age_gender_dataset(data, age_partitions):
 
 def create_wiki_datasets(age=True, gender=True, gender_age=True):
 	proccesed_data = proccess_wiki_mat('./datasets/raw/wiki/wiki/wiki.mat')
-	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 130]]
+	age_partitions = [[0, 3], [4, 7], [8, 14], [15, 24], [25, 37], [38, 47], [48, 59], [60, 130]]
 	if age:
 		make_wiki_gender_dataset(proccesed_data)
 		print("Done creating gender dataset")
