@@ -1,9 +1,9 @@
 from time import strftime
-from keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 import keras
 from keras.preprocessing.image import ImageDataGenerator
 from twilio.rest import Client
-from resnet import resnetBuilder
+from models.resnet import resnetBuilder
 
 
 
@@ -155,6 +155,7 @@ def trainResnet():
     )
 
     # Do other stuff, generate plots, save results, etc.
+
 
 
 if __name__ == '__main__':
