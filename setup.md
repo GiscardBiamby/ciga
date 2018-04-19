@@ -37,9 +37,12 @@ The files are extracted into `./<project-root>/datasets/<filename>/*`, where ``<
 
 ## 3. Process Datasets
 
-### Partition Adience Data:
+### Partition Data:
+
+The keras code uses .flow_from_directory(), which expects all images to be in subfolders according to their ground-truth labels. These scripts partition the various datasets according to that expectation. The partitioned data goes into ./datasets/processed/[dataset\_name]/[partition\_scheme]/. [partition\_scheme] describes a certain partitioning scheme for the data. There are three partition schemes: by age, by gender, or by age_gender (both together).
 
 ```bash
 cd datasets
 python populate_subfolders.py
+python process_wiki_imdb_data.py
 ```
