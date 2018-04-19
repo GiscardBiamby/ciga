@@ -9,7 +9,10 @@ from datetime import datetime, timedelta
 valid_ration = 10
 
 def mat_date_convert(mat_date):
-    return (timedelta(days=mat_date - 366) + datetime(1, 1, 1)).year
+    try:
+        return (timedelta(days=mat_date - 366) + datetime(1, 1, 1)).year
+    except Exception as e:
+        return None
 
 def copy_data(data, class_name, origin_path, dest_path, max_samples=None):
     copied = 0
@@ -29,8 +32,10 @@ def proccess_mat(path, dict_key):
 	raw = raw[0][0]
 
 	data = []
-	for i in raw:
-	    data.append(i)
+
+	for idx, i in enumerate(raw):
+		if not (dict_key == "imdb" and idx == 8):
+			data.append(i)
 	data = np.array(data)
 	data = data.squeeze()
 
@@ -38,19 +43,45 @@ def proccess_mat(path, dict_key):
 	data.shape
 
 	df = pd.DataFrame(data)
-	df.columns = ['dob', 'photo_taken', 'full_path', 'gender', 'name', 'face_location', 'face_score', 'second_face_score']
+	if dict_key == "wiki":
+		df.columns = ['dob', 'photo_taken', 'full_path', 'gender', 'name', 'face_location', 'face_score',
+					  'second_face_score']
+	else:
+		df.columns = ['dob', 'photo_taken', 'full_path', 'gender', 'name', 'face_location', 'face_score',
+					  'second_face_score', 'celeb_names']
 
+	totalRows = df.shape[0]
+	print("{} total rows: {}".format(dict_key, totalRows))
+
+	before = df.shape[0]
 	df = df[df['face_score'] != float('-inf')]
-	df = df.dropna(subset=['gender'])
-	df = df[pd.isnull(df['second_face_score'])]
+	print("...Dropped {} rows with null or not-convertible face_score.".format(before - df.shape[0]))
 
-	df['age'] = df['photo_taken'] - df['dob'].apply(mat_date_convert)
+	before = df.shape[0]
+	df = df.dropna(subset=['gender'])
+	print("...Dropped {} rows with null gender.".format(before - df.shape[0]))
+
+	before = df.shape[0]
+	df = df[pd.isnull(df['second_face_score'])]
+	print("...Dropped {} rows with more than one face.".format(before - df.shape[0]))
+
+	before = df.shape[0]
+	df["dob"] = df['dob'].apply(mat_date_convert)
+	df = df[~pd.isnull(df['dob'])]
+	print("...Dropped {} rows with null or not-convertible DOB...".format(before - df.shape[0]))
+
+	totalRowsAfter = df.shape[0]
+	print("Finished scrubbing {}. totalRowsAfter: {}, total dropped: {}".format(
+		dict_key, totalRowsAfter, (totalRows - totalRowsAfter))
+	)
+
+	df['age'] = df['photo_taken'] - df['dob']
 	return df[['full_path', 'gender', 'age']]
 
 def make_gender_dataset(raw_images_path, dataset_name, data):
-	train_directory = './datasets/processed/{}/gender/train/'.format(dataset_name)
-	valid_directory = './datasets/processed/{}/gender/valid/'.format(dataset_name)
-
+	train_directory = './processed/{}/gender/train/'.format(dataset_name)
+	valid_directory = './processed/{}/gender/valid/'.format(dataset_name)
+	print("train dir: {}, valid_dir: ".format(train_directory, valid_directory))
 	# creates directory ifs not there already
 	# Train:
 	if not os.path.exists(train_directory + 'male'):
@@ -82,8 +113,9 @@ def make_gender_dataset(raw_images_path, dataset_name, data):
 	print('female training:', len(train_female), 'validation:', len(val_female))
 
 def make_age_dataset(raw_images_path, dataset_name, data, age_partitions):
-	train_directory = './datasets/processed/{}/age/train/'.format(dataset_name)
-	valid_directory = './datasets/processed/{}/age/valid/'.format(dataset_name)
+	train_directory = './processed/{}/age/train/'.format(dataset_name)
+	valid_directory = './processed/{}/age/valid/'.format(dataset_name)
+	print("train dir: {}, valid_dir: ".format(train_directory, valid_directory))
 
 	for age_partition in age_partitions:
 		lower, upper = age_partition
@@ -107,8 +139,8 @@ def make_age_dataset(raw_images_path, dataset_name, data, age_partitions):
 		print(class_name, 'training:', len(train), 'validation:', len(validate))
 
 def make_age_gender_dataset(raw_images_path, dataset_name, data, age_partitions):
-	train_directory = './datasets/processed/{}/age_gender/train/'.format(dataset_name)
-	valid_directory = './datasets/processed/{}/age_gender/valid/'.format(dataset_name)
+	train_directory = './processed/{}/age_gender/train/'.format(dataset_name)
+	valid_directory = './processed/{}/age_gender/valid/'.format(dataset_name)
 
 	genders = ['female', 'male']
 
@@ -146,22 +178,22 @@ def create_datasets(metadata_path, raw_images_path, metadata_dict_key, age=True,
 		print("Done creating gender dataset")
 		print('=================================================================')
 	if gender:
-		make_age_dataset(raw_images_path, proccesed_data, metadata_dict_key, age_partitions)
+		make_age_dataset(raw_images_path, metadata_dict_key, proccesed_data, age_partitions)
 		print("Done creating age dataset")
 		print('=================================================================')
 	if gender_age:
-		make_age_gender_dataset(raw_images_path, proccesed_data, metadata_dict_key, age_partitions)
+		make_age_gender_dataset(raw_images_path, metadata_dict_key, proccesed_data, age_partitions)
 		print("Done creating age+gender dataset")
 		print('=================================================================')
 
 if __name__ == '__main__':
-	# create_datasets(
-     #    metadata_path='./datasets/raw/wiki/wiki/wiki.mat'
-     #    , raw_images_path = './datasets/raw/wiki_crop/wiki_crop/'
-     #    , metadata_dict_key="wiki"
-     #    , age=True
-     #    , gender=True
-     #    , gender_age=True)
+	create_datasets(
+        metadata_path='./raw/wiki/wiki/wiki.mat'
+        , raw_images_path = './raw/wiki_crop/wiki_crop/'
+        , metadata_dict_key="wiki"
+        , age=True
+        , gender=True
+        , gender_age=True)
 	create_datasets(
         metadata_path='./raw/imdb_meta/imdb/imdb.mat'
         , raw_images_path = './raw/imdb_crop/imdb_crop/'
