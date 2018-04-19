@@ -52,7 +52,7 @@ class BasicTrainer(object):
         if (self.enable_checkpoints):
             self.callbacks.append(
                 ModelCheckpoint(
-                    filepath='./weights/{}-{}.hdf5'.format(self.model.name, strftime("%a_%d_%b_%Y_%H_%M_%S"))
+                    filepath='../weights/{}-{}.hdf5'.format(self.model.name, strftime("%a_%d_%b_%Y_%H_%M_%S"))
                     , verbose=1
                     , save_best_only=True
                 )

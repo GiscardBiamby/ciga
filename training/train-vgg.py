@@ -3,14 +3,12 @@ import training.trainer as cigaTraining
 from keras import optimizers
 
 
-def trainVgg16():
+def trainVgg16(dataset_name = "gender"):
 
-    dataset_name = "gender"
     dataset_path = "../datasets/processed/wiki/{}/".format(dataset_name)
     grayscale = False
     img_size = 224
     batch_size = 64
-
     num_channels = 1 if grayscale else 3
     img_shape = (img_size, img_size, num_channels)
 
@@ -36,12 +34,13 @@ def trainVgg16():
             , "optimizer": optimizers.SGD(lr=1e-2, decay=5e-4, momentum=0.9, nesterov=True)
         }
         , enable_sms = False
+        , enable_checkpoints = True
     )
     history, model = trainer.train(
         validation_generator
         , train_generator
         , batch_size = batch_size
-        , epochs = 17
+        , epochs = 30
     )
 
 
@@ -49,4 +48,4 @@ def trainVgg16():
     # Do other stuff, generate plots, save results, etc.
 
 if __name__ == '__main__':
-    trainVgg16()
+    trainVgg16("age")
