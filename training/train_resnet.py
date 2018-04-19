@@ -5,7 +5,7 @@ import models.resnet as cigaModels
 import training.trainer as cigaTraining
 from keras import optimizers
 
-
+## TODO: Put all these params into trainer_config, so they get saved into trainer.config.json (see BasicTrainer.saveModel())
 def trainResnet(dataset_path, architecture, trainer_config, epochs=1, img_size=(50, 50), batch_size=50, grayscale=True):
 
     # Build data generator:
@@ -23,6 +23,7 @@ def trainResnet(dataset_path, architecture, trainer_config, epochs=1, img_size=(
         , batch_size = batch_size
         , epochs = epochs
     )
+    trainer.saveModel("resnet-testing")
 
 
 if __name__ == '__main__':
@@ -35,15 +36,14 @@ if __name__ == '__main__':
     architecture = {'stages': [[1, 1]],
                  'dense': [32]}
 
-    optimizer = optimizers.Adam()
-
     trainer_config = {
             "reduce_lr_params": {
                 "factor":  0.2
                 , "patience": 1
                 , "min_lr": 1e-8
-                },
-                "optimizer": optimizer
+                }
+                , "optimizer": "adam"
+                , "optimizer_params": {}
             }
     trainResnet(dataset_path, architecture, trainer_config, epochs=epochs, img_size=img_size, batch_size=batch_size, grayscale=grayscale)
 

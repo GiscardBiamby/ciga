@@ -5,13 +5,8 @@ from keras.layers import Input, Dense, Activation, Conv2D, MaxPooling2D, Flatten
 
 def getModel_vgg11(image_shape, num_classes, name="vgg11"):
     ## VGG11 architecture: https://arxiv.org/pdf/1409.1556.pdf
-    ## Also may be able to use VGG-Face pre-trained weights. Not sure if the VGG-Face
-    ## architecture is the same as the VGG-16.
-    ## Note: if the architectures don't match, they probably only differ by a small
-    ## amount, so we can probably create a separate VGG-Face model based on our VGG16
-    ## and then use the weights from Oxford: http://www.robots.ox.ac.uk/~vgg/software/vgg_face/
 
-    # This implementation is based on Configuration D from page 3 of 1409.1556.pdf, so 16 weight layers total:
+    # This implementation is based on Configuration A from page 3 of 1409.1556.pdf, so 16 weight layers total:
 
     # Input (image):
     # Note, I read somewhere that for tensorflow the order matters for performance,
@@ -48,7 +43,7 @@ def getModel_vgg11(image_shape, num_classes, name="vgg11"):
 
     # Final weight layers:
     # Note: The ReLu and Dropout stages here aren't part of original VGG paper, but the website by the authors
-    # of the paper lists a slightly different version of the paper model that is their "best", which
+    # of the paper lists a slightly different version of the model that is their "best", which
     # includes these layers (http://www.robots.ox.ac.uk/~vgg/research/very_deep/):
     x = Flatten()(x)
     x = Dense(units=4096, name="final_fc_1")(x)

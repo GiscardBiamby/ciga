@@ -4,8 +4,11 @@ import keras
 from keras.preprocessing.image import ImageDataGenerator
 from twilio.rest import Client
 from models.resnet import resnetBuilder
-
-
+import os
+import json
+from keras.models import model_from_json, load_model
+import matplotlib.pyplot as plt
+from keras import optimizers
 
 # Maybe this should go into it's own file and/or class
 def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
@@ -98,9 +101,15 @@ class BasicTrainer(object):
         num_train = train_generator.samples
 
         # Default to Adam if config doesn't specify an optimizer:
+
         optimizer = "adam"
         if ("optimizer" in self.config and self.config["optimizer"] is not None):
-            optimizer = self.config["optimizer"]
+            if self.config["optimizer"] == "adam":
+                optimizer = optimizers.Adam(**(self.config["optimizer_params"]))
+            elif self.config["optimizer"] == "sgd":
+                optimizer = optimizers.SGD(**(self.config["optimizer_params"]))
+            else:
+                raise NotImplementedError(self.config["optimizer"])
 
         self.model.compile(optimizer=optimizer,
                     loss='categorical_crossentropy',
@@ -116,3 +125,68 @@ class BasicTrainer(object):
                                       use_multiprocessing=True,
                                       workers=4)
         return self.model
+
+
+    def saveModel(self, name):
+        """
+        This function should save as much info as possible about the model, as well as the model + weights.
+        Make some kind of json file or similar, alongside the .h5 file. json should contain all the config info about
+        how the model was trained (hyperparams, etc). Plots, training accuracy, history, etc.
+        So that once we train, we have access to all the info so we can write up results later.
+
+        :param name:
+        :return:
+        """
+        name = "{}-{}".format(name, strftime("%a_%d_%b_%Y_%H_%M_%S"))
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        savedModelDir = os.path.join(project_root, "models/saved_models/{}/".format(name))
+        print("savedModelsPath: ", savedModelDir)
+        if not os.path.exists(savedModelDir):
+            os.makedirs(savedModelDir)
+
+        # Save model and weights:
+        self.model.save(os.path.join(savedModelDir, name + ".h5"))
+        with open(os.path.join(savedModelDir, 'model_architecture.json'), 'w') as f:
+            f.write(self.model.to_json())
+
+        # Save summary:
+        with open(os.path.join(savedModelDir, 'model_summary.txt'), 'w') as fp:
+            self.model.summary(print_fn=lambda x: fp.write(x + '\n'))
+
+        # Save model diagram:
+        keras.utils.plot_model(self.model
+                               , to_file=os.path.join(savedModelDir, 'model.png')
+                               , show_shapes=True
+                               , show_layer_names=True
+                               , rankdir='TB'
+                               )
+        # Save Plots:
+        self.saveTrainingPlots(savedModelDir)
+
+        # Save trainer config:
+        with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
+            json.dump(self.config, fp)
+
+    def saveTrainingPlots(self, savedModelDir):
+        """
+        Saves plots of loss/val_loss, acc/val_acc, and learning_rate to savedModelDir
+        :param savedModelDir:
+        :return:
+        """
+        val_loss, val_acc, loss, acc, lr = self.model.history.history.values()
+        plt.plot(loss, label="loss")
+        plt.plot(val_loss, label="val_loss")
+        plt.legend()
+        plt.savefig(os.path.join(savedModelDir, "loss.png"))
+        plt.close()
+
+        plt.plot(acc, label="acc")
+        plt.plot(val_acc, label="val_acc")
+        plt.legend()
+        plt.savefig(os.path.join(savedModelDir, "accuracy.png"))
+        plt.close()
+
+        plt.plot(lr, label="lr")
+        plt.legend()
+        plt.savefig(os.path.join(savedModelDir, "learning_rate.png"))
+        plt.close()
