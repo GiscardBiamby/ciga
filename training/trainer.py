@@ -1,5 +1,5 @@
 from time import strftime
-from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 import keras
 from keras.preprocessing.image import ImageDataGenerator
 from twilio.rest import Client
@@ -61,6 +61,7 @@ class BasicTrainer(object):
         # I think we always use reduceLR, but if we ever don't, just add an if statement
         # to only append this callback if the reduce_lr_params key exists in self.config:
         self.callbacks.append(ReduceLROnPlateau(**(self.config["reduce_lr_params"])))
+        self.callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto'))
 
         # Add if statement, or just make the caller use self.addCallback, since not everyoe will use this:
         if self.enable_sms:
@@ -114,54 +115,4 @@ class BasicTrainer(object):
                                       verbose=1,
                                       use_multiprocessing=True,
                                       workers=4)
-        return history, self.model
-
-
-##
-## TODO: Move the actual training code to another file:
-def trainResnet():
-
-    path = '../datasets/processed/wiki/age/'
-    img_size = (50, 50)
-    batch_size = 32
-    grayscale = True
-    epochs = 1
-
-    # Build data generator:
-    num_channels = 1 if grayscale else 3
-    train_generator, validation_generator = generatorsBuilder(
-        path, img_dims=img_size, batch_size=batch_size, grayscale=grayscale
-    )
-
-    # Build Model:
-    architecture = {'stages': [[1, 1]],
-                     'dense': [32]}
-    model = resnetBuilder(architecture, (img_size[0], img_size[1], num_channels), train_generator.num_classes)
-
-
-    # Train:
-    trainer = BasicTrainer(
-        model = model
-        , config = {
-            "reduce_lr_params": {
-                "factor":  0.2
-                , "patience": 1
-                , "min_lr": 1e-8
-            }
-
-        }
-        , enable_sms = False
-    )
-    history, model = trainer.train(
-        validation_generator
-        , train_generator
-        , batch_size = batch_size
-        , epochs = 1
-    )
-
-    # Do other stuff, generate plots, save results, etc.
-
-
-
-if __name__ == '__main__':
-    trainResnet()
+        return self.model

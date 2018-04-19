@@ -19,9 +19,6 @@ def resnetBuilder(architecture, img_shape, num_classes):
 	x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(x)
 	res = x
 
-	# architecture = {'stages': [[1, 4], [1, 8]],
-	# 				 'dense': [256]}
-
 	for stage in architecture['stages']:
 	    depth ,filters = stage
 	    
