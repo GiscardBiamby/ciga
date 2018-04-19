@@ -15,6 +15,7 @@ for p in paths:
         os.makedirs(p)
 
 male, female, age_path = processed_path + '/gender/male', processed_path + '/gender/female', processed_path + '/age/'
+gender_age += '/'
 for j in range(5):
     folds = [np.genfromtxt(os.path.join(raw_path, "fold_%d_data.txt" % j), usecols=(0,1,2,3,4), delimiter='\t', dtype=None)]
     folds += [np.genfromtxt(os.path.join(raw_path, "fold_frontal_%d_data.txt" % j), usecols=(0,1,2,3,4), delimiter='\t', dtype=None)]
