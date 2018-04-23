@@ -10,7 +10,7 @@ import numpy as np
 def trainResnet(dataset_path, architecture, trainer_config, epochs=1, img_size=50, batch_size=50, grayscale=True):
 
     # Build data generator:
-    train_generator, validation_generator = cigaTraining.generatorsBuilder(dataset_path, img_dims=(50, 50) , batch_size=batch_size, grayscale=grayscale)
+    train_generator, validation_generator = cigaTraining.generatorsBuilder(dataset_path, img_dims=(img_size, img_size) , batch_size=batch_size, grayscale=grayscale)
     
     # Build Model:
     model = cigaModels.resnetBuilder(architecture, train_generator.image_shape, train_generator.num_classes)
@@ -36,10 +36,10 @@ def resNetRandomSearch(numChoices=2):
     optimizer = 'adam'
 
     batch_sizes = [1, 16, 32, 64, 128]
-    num_stages = (2, 3, 4, 5)
-    num_layers = (1, 2, 3, 4, 5)
-    num_denses = (1, 2, 3)
-    dense_sizes = [126, 512, 1024] 
+    num_stages = [2, 3, 4, 5]
+    num_layers = [1, 2, 3, 4, 5]
+    num_denses = [1, 2, 3]
+    dense_sizes = [126, 512, 1024]
     learning_rates = [0.01, 0.001, 0.0001, 0.00001]
 
     batch_sizes = np.random.choice(batch_sizes, min(numChoices, len(batch_sizes)), replace=False)
@@ -72,6 +72,13 @@ def resNetRandomSearch(numChoices=2):
                                         }
                                         , "optimizer": optimizer
                                         , "optimizer_params": {"lr" : lr}
+                                        , "batch_size" : batch_size
+                                        , "stages" : stages
+                                        , "layers" : layers
+                                        , "dense" : dense
+                                        , "dense_size" : dense_size
+                                        , "img_size" : img_size
+                                        , "grayscale" : grayscale
                                     }
 
                             trainResnet(dataset_path, architecture, trainer_config,
