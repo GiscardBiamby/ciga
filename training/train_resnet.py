@@ -35,7 +35,7 @@ def resNetRandomSearch(numChoices=2):
     grayscale = True
     optimizer = 'adam'
 
-    batch_sizes = [16, 32, 64, 128]
+    batch_sizes = [64, 128, 256, 512, 1024]
     num_stages = [2, 3, 4, 5]
     num_layers = [1, 2, 3, 4, 5]
     num_denses = [1, 2, 3]
