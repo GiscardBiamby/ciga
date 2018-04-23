@@ -59,3 +59,19 @@ def k_fold_cross_val(k, model, epochs, img_dims=(50, 50), batch_size=32, graysca
                                                         class_mode='categorical')
 
     model.fit(X[train], Y[train], epochs=150, batch_size=k, verbose=0)
+
+
+def adience_crossval_score(model, epochs, img_dims=(224, 224), batch_size=32, grayscale=True, label_by="age"):
+    """
+    Performs k-fold crossvalidation on the pre-defined splits on the adience dataset.
+    :param model:
+    :param epochs:
+    :param img_dims:
+    :param batch_size:
+    :param grayscale:
+    :param label_by:
+    :return: Average accuracy, average one-off accuracy, std.dev of accuracy
+    """
+
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dataset_path = os.path.join(project_root, "datasets/processed/adience")
