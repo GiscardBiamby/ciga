@@ -39,7 +39,7 @@ def resNetRandomSearch(numChoices=2):
     num_stages = [2, 3, 4, 5]
     num_layers = [1, 2, 3, 4, 5]
     num_denses = [1, 2, 3]
-    dense_sizes = [126, 512, 1024]
+    dense_sizes = [128, 512, 1024]
     learning_rates = [0.01, 0.001, 0.0001, 0.00001]
 
     batch_sizes = np.random.choice(batch_sizes, min(numChoices, len(batch_sizes)), replace=False)
@@ -81,6 +81,10 @@ def resNetRandomSearch(numChoices=2):
                                         , "grayscale" : grayscale
                                     }
 
+                            if cigaTraining.configHasAlreadyRun(trainer_config, "ResNet val_acc"):
+                                print("Skipping training for previously run config: ", trainer_config)
+                                continue
+
                             print("Starting training w/ config: ", trainer_config)
                             trainResnet(dataset_path, architecture, trainer_config,
                                         epochs=epochs, img_size=img_size, batch_size=batch_size,
@@ -95,7 +99,6 @@ def resNetRandomSearch(numChoices=2):
 
 if __name__ == '__main__':
     resNetRandomSearch()
-
 
 
 
