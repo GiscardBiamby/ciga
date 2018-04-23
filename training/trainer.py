@@ -9,6 +9,7 @@ import json
 from keras.models import model_from_json, load_model
 import matplotlib.pyplot as plt
 from keras import optimizers
+import numpy
 
 # Maybe this should go into it's own file and/or class
 def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
@@ -165,7 +166,7 @@ class BasicTrainer(object):
 
         # Save trainer config:
         with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
-            json.dump(self.config, fp)
+            json.dump(self.config, fp, cls=CustJsonEncoder)
 
     def saveTrainingPlots(self, savedModelDir):
         """
@@ -190,3 +191,16 @@ class BasicTrainer(object):
         plt.legend()
         plt.savefig(os.path.join(savedModelDir, "learning_rate.png"))
         plt.close()
+
+
+
+class CustJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.integer):
+            return int(obj)
+        elif isinstance(obj, numpy.floating):
+            return float(obj)
+        elif isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        else:
+            return super(CustJsonEncoder, self).default(obj)

@@ -35,7 +35,7 @@ def resNetRandomSearch(numChoices=2):
     grayscale = True
     optimizer = 'adam'
 
-    batch_sizes = [1, 16, 32, 64, 128]
+    batch_sizes = [16, 32, 64, 128]
     num_stages = [2, 3, 4, 5]
     num_layers = [1, 2, 3, 4, 5]
     num_denses = [1, 2, 3]
@@ -81,6 +81,7 @@ def resNetRandomSearch(numChoices=2):
                                         , "grayscale" : grayscale
                                     }
 
+                            print("Starting training w/ config: ", trainer_config)
                             trainResnet(dataset_path, architecture, trainer_config,
                                         epochs=epochs, img_size=img_size, batch_size=batch_size,
                                         grayscale=grayscale)
@@ -94,8 +95,6 @@ def resNetRandomSearch(numChoices=2):
 
 if __name__ == '__main__':
     resNetRandomSearch()
-
-
 
 
 
