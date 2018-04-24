@@ -3,7 +3,6 @@ from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 import keras
 from keras.preprocessing.image import ImageDataGenerator
 from twilio.rest import Client
-from models.resnet import resnetBuilder
 import os
 import json
 from keras.models import model_from_json, load_model
@@ -11,6 +10,10 @@ import matplotlib.pyplot as plt
 from keras import optimizers
 import numpy
 import glob
+## extra imports to set GPU options
+import tensorflow as tf
+from keras import backend as K
+import gc
 
 # Maybe this should go into it's own file and/or class
 def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
@@ -151,7 +154,7 @@ class BasicTrainer(object):
                                       callbacks=self.callbacks,
                                       verbose=1,
                                       use_multiprocessing=True,
-                                      workers=4)
+                                      workers=2)
         return self.model
 
 
@@ -219,6 +222,16 @@ class BasicTrainer(object):
         plt.savefig(os.path.join(savedModelDir, "learning_rate.png"))
         plt.close()
 
+    @staticmethod
+    def clearGpuSession():
+        gc.collect()
+        K.get_session().close()
+        cfg = K.tf.ConfigProto()
+        cfg.gpu_options.allow_growth = True
+        K.set_session(K.tf.Session(config=cfg))
+        K.tensorflow_backend.set_session(tf.Session(config=cfg))
+        K.clear_session()
+        gc.collect()
 
 
 class CustJsonEncoder(json.JSONEncoder):
