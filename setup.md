@@ -46,3 +46,15 @@ cd datasets
 python populate_subfolders.py
 python process_wiki_imdb_data.py
 ```
+
+#### 3b. (Optional) K Folds Dataset Pre-processing
+
+If you intend to use K folds cross validation on a specific dataset, please accomplish the following pre-processing step before attempting to do so:
+
+```bash
+cd datasets
+python generate_folds.py dataset_name K label_name
+```
+
+Note: dataset_name should be either "imdb", "wiki", or "adience".
+      label_name should be either "age", "gender", or "age_gender"
