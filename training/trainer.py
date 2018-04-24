@@ -63,6 +63,7 @@ class BasicTrainer(object):
 
         # I think we always use reduceLR, but if we ever don't, just add an if statement
         # to only append this callback if the reduce_lr_params key exists in self.config:
+        self.config["reduce_lr_params"]["verbose"] = True
         self.callbacks.append(ReduceLROnPlateau(**(self.config["reduce_lr_params"])))
         self.callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto'))
 
