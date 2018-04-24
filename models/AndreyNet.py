@@ -17,25 +17,26 @@ def AndreyNetBuilder(architecture, img_shape, num_classes):
 	x = Conv2D(filters=first_filters, kernel_size=7,  padding='same')(x)
 
 	x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(x)
-	first_res = x
-
-	prev_shape = first_res._keras_shape
-	prev_shape = prev_shape[1:]
-	res = Flatten()(first_res)
-	res = Dense(res._keras_shape[1])(res)
-	res = Reshape(prev_shape)(res)
+	# first_res = x
+	res = x
+	# prev_shape = first_res._keras_shape
+	# prev_shape = prev_shape[1:]
+	# res = Flatten()(first_res)
+	# res = Dense(res._keras_shape[1])(res)
+	# res = Reshape(prev_shape)(res)
 
 	for stage in architecture['stages']:
 	    depth ,filters = stage
 	    
 	    # halves residual spatial dimentions to match main branch shape
 	    if stage != 0:
-	        first_res = Conv2D(filters=filters, kernel_size=(1, 1), strides=2, padding='same')(first_res)
-	        prev_shape = first_res._keras_shape
-	        prev_shape = prev_shape[1:]
-	        res = Flatten()(first_res)
-	        res = Dense(res._keras_shape[1])(res)
-	        res = Reshape(prev_shape)(res)
+	    	res = Conv2D(filters=filters, kernel_size=(1, 1), strides=2, padding='same')(res)
+	        # first_res = Conv2D(filters=filters, kernel_size=(1, 1), strides=2, padding='same')(first_res)
+	        # prev_shape = first_res._keras_shape
+	        # prev_shape = prev_shape[1:]
+	        # res = Flatten()(first_res)
+	        # res = Dense(res._keras_shape[1])(res)
+	        # res = Reshape(prev_shape)(res)
 	        
 	    for i in range(depth):        
 	        # First resnet layer
@@ -59,11 +60,11 @@ def AndreyNetBuilder(architecture, img_shape, num_classes):
 	        x = Conv2D(filters=filters, kernel_size=3, padding='same')(x)
 	        x = Add()([x, res])
 
-	        prev_shape = first_res._keras_shape
-	        prev_shape = prev_shape[1:]
-	        res = Flatten()(first_res)
-	        res = Dense(res._keras_shape[1])(res)
-	        res = Reshape(prev_shape)(res)
+	        # prev_shape = first_res._keras_shape
+	        # prev_shape = prev_shape[1:]
+	        # res = Flatten()(first_res)
+	        # res = Dense(res._keras_shape[1])(res)
+	        # res = Reshape(prev_shape)(res)
 	    
 	x = AveragePooling2D(pool_size=(2, 2))(x)
 
