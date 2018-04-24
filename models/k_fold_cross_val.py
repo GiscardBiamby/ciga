@@ -8,8 +8,6 @@ import training.trainer as cigaTraining
 from keras import optimizers
 
 def k_fold_cross_val(dataset, k, label_type, trainer_config, epochs=1, img_size=50, batch_size=32, grayscale=True, weights=None):
-    if weights:
-        print(weights)
     num_channels = 1 if grayscale else 3
     img_shape = (img_size, img_size, num_channels)
     fold_paths = "../datasets/processed/" + dataset + "/" + label_type + "/fold_"
@@ -19,8 +17,7 @@ def k_fold_cross_val(dataset, k, label_type, trainer_config, epochs=1, img_size=
     train_generators, validation_generators = [], []
     for i in range(k):
         train, valid = cigaTraining.generatorsBuilder(
-            fold_paths[i], img_dims=(img_size, img_size), batch_size=batch_size, grayscale=grayscale
-        )
+            fold_paths[i], img_dims=(img_size, img_size), batch_size=batch_size, grayscale=grayscale)
         train_generators += [train]
         validation_generators += [valid]
     num_classes = train.num_classes
@@ -29,12 +26,16 @@ def k_fold_cross_val(dataset, k, label_type, trainer_config, epochs=1, img_size=
     # Build k Models:
     models = [cigaModels.getModel_vgg16(img_shape, num_classes) for _ in range(k)]
 
+    if weights:
+        for i in range(k):
+            models[i].load_weights(weights, by_name=False)
+
     # Train:
     trainers = [cigaTraining.BasicTrainer(model=models[i], config=trainer_config, enable_sms=False) for i in range(k)]
     models = [trainers[i].train(validation_generators[i], train_generators[i], batch_size=batch_size, epochs=epochs) for i in range(k)]
 
     for i in range(k):
-        trainers[i].saveModel("foo%d" % (i+1))
+        trainers[i].saveModel('VGG-16 fold %d validation accuracy ' % (i+1) + str(max(models[i].history.history['val_acc'])))
 
 def main():
     parser = argparse.ArgumentParser(

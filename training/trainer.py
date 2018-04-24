@@ -3,7 +3,6 @@ from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 import keras
 from keras.preprocessing.image import ImageDataGenerator
 from twilio.rest import Client
-from models.resnet import resnetBuilder
 import os
 import json
 from keras.models import model_from_json, load_model
@@ -11,6 +10,12 @@ import matplotlib.pyplot as plt
 from keras import optimizers
 import numpy
 import glob
+import collections, re, csv
+## extra imports to set GPU options
+import tensorflow as tf
+from keras import backend as K
+import gc
+
 
 # Maybe this should go into it's own file and/or class
 def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
@@ -56,7 +61,7 @@ def configHasAlreadyRun(trainer_config, model_name_pattern="ResNet val_acc"):
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     saved_models_dir = os.path.join(project_root, "models/saved_models/")
     completed_configs = list(glob.glob(
-            "{}/{} */trainer_config.json".format(saved_models_dir, model_name_pattern)
+            "{}/{}*/trainer_config.json".format(saved_models_dir, model_name_pattern)
         ))
 
     for config_path in completed_configs:
@@ -152,7 +157,7 @@ class BasicTrainer(object):
                                       callbacks=self.callbacks,
                                       verbose=1,
                                       use_multiprocessing=True,
-                                      workers=4)
+                                      workers=2)
         return self.model
 
 
@@ -219,6 +224,66 @@ class BasicTrainer(object):
         plt.legend()
         plt.savefig(os.path.join(savedModelDir, "learning_rate.png"))
         plt.close()
+
+    @staticmethod
+    def clearGpuSession():
+        gc.collect()
+        K.get_session().close()
+        cfg = K.tf.ConfigProto()
+        cfg.gpu_options.allow_growth = True
+        K.set_session(K.tf.Session(config=cfg))
+        K.tensorflow_backend.set_session(tf.Session(config=cfg))
+        K.clear_session()
+        gc.collect()
+
+    @staticmethod
+    def gatherHyperParamResults(model_name_pattern, output_csv_path):
+        """
+        Creates csv file of hyperparameters + val_acc, for given model_name pattern.
+
+        Pattern would be "ResNet", "AndreyNet", "Vgg16" etc, and only results that contain that
+        keyword will be pulled.
+
+        :param model_name_pattern:
+        :param output_csv_path:
+        :return:
+        """
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        saved_models_dir = os.path.join(project_root, "models/saved_models/")
+        completed_configs = list(glob.glob(
+                "{}/{}*/trainer_config.json".format(saved_models_dir, model_name_pattern)
+            ))
+
+        all_configs = []
+        for config_path in completed_configs:
+            with open(config_path) as handle:
+                config = json.loads(handle.read())
+
+                # Get val_acc from file_path (hacky):
+                val_acc = re.search("val_acc [\d\.]*-", config_path)
+                val_acc = val_acc.group(0).replace("-", "").replace(" ", "").replace("val_acc", "")
+                config["val_acc"] = val_acc
+
+                all_configs.append(BasicTrainer.flattenJson(config))
+
+        # Write as csv:
+        with open(output_csv_path, 'w') as csv_file:
+            w = csv.DictWriter(csv_file, all_configs[0].keys())
+            w.writeheader()
+            for config in all_configs:
+                w.writerow(config)
+
+
+    @staticmethod
+    def flattenJson(d, parent_key='', sep='_'):
+        items = []
+        for k, v in d.items():
+            new_key = parent_key + sep + k if parent_key else k
+            if isinstance(v, collections.MutableMapping):
+                items.extend(BasicTrainer.flattenJson(v, new_key, sep=sep).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
 
 
 
