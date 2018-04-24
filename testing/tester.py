@@ -40,5 +40,5 @@ def test(model, img_dims=(50,50), grayscale=True,  rescale=1.0, shuffle=False, l
                                                              class_mode='categorical',
                                                              shuffle=shuffle)
 
-    test_score = model.evaluate_generator(test_generator)[1]
+    test_score = model.evaluate_generator(test_generator, use_multiprocessing=True)[1]
     return test_score

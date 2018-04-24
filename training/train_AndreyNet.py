@@ -1,19 +1,19 @@
 import sys
 sys.path.append('../')
 
-import models.resnet as cigaModels
+import models.AndreyNet as cigaModels
 import training.trainer as cigaTraining
 from keras import optimizers
 import numpy as np
 
 ## TODO: Put all these params into trainer_config, so they get saved into trainer.config.json (see BasicTrainer.saveModel())
-def trainResnet(dataset_path, architecture, trainer_config, epochs=1, img_size=50, batch_size=50, grayscale=True):
+def trainAndreyNet(dataset_path, architecture, trainer_config, epochs=1, img_size=50, batch_size=50, grayscale=True):
 
     # Build data generator:
     train_generator, validation_generator = cigaTraining.generatorsBuilder(dataset_path, img_dims=(img_size, img_size) , batch_size=batch_size, grayscale=grayscale)
     
     # Build Model:
-    model = cigaModels.resnetBuilder(architecture, train_generator.image_shape, train_generator.num_classes)
+    model = cigaModels.AndreyNetBuilder(architecture, train_generator.image_shape, train_generator.num_classes)
 
     # Train:
     trainer = cigaTraining.BasicTrainer(model = model, config = trainer_config, enable_sms = False)
@@ -24,10 +24,10 @@ def trainResnet(dataset_path, architecture, trainer_config, epochs=1, img_size=5
         , batch_size = batch_size
         , epochs = epochs
     )
-    trainer.saveModel('ResNet val_acc ' + str(max(model.history.history['val_acc'])))
+    trainer.saveModel('AndreyNet val_acc ' + str(max(model.history.history['val_acc'])))
 
-def resNetRandomSearch(numChoices=2):
-    dataset_path = '../datasets/processed/wiki/gender/'
+def AndreyNetRandomSearch(numChoices=2):
+    dataset_path = '../datasets/processed/wiki/age/'
 
     epochs = 20
     
@@ -37,9 +37,9 @@ def resNetRandomSearch(numChoices=2):
 
     batch_sizes = [64, 128, 256, 512, 1024]
     num_stages = [2, 3, 4, 5]
-    num_layers = [1, 2, 3, 4, 5]
+    num_layers = [2, 3, 4, 5]
     num_denses = [1, 2, 3]
-    dense_sizes = [128, 512, 1024]
+    dense_sizes = [256, 512, 1024]
     learning_rates = [0.01, 0.001, 0.0001, 0.00001]
 
     batch_sizes = np.random.choice(batch_sizes, min(numChoices, len(batch_sizes)), replace=False)
@@ -86,7 +86,7 @@ def resNetRandomSearch(numChoices=2):
                                 continue
 
                             print("Starting training w/ config: ", trainer_config)
-                            trainResnet(dataset_path, architecture, trainer_config,
+                            trainAndreyNet(dataset_path, architecture, trainer_config,
                                         epochs=epochs, img_size=img_size, batch_size=batch_size,
                                         grayscale=grayscale)
                             print('+====================================================================+')  
@@ -98,7 +98,7 @@ def resNetRandomSearch(numChoices=2):
 
 
 if __name__ == '__main__':
-    resNetRandomSearch()
+    AndreyNetRandomSearch()
 
 
 

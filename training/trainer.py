@@ -9,6 +9,8 @@ import json
 from keras.models import model_from_json, load_model
 import matplotlib.pyplot as plt
 from keras import optimizers
+import numpy
+import glob
 
 # Maybe this should go into it's own file and/or class
 def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
@@ -39,6 +41,32 @@ def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=
                                                         class_mode='categorical')
     return train_generator, valid_generator
 
+def configHasAlreadyRun(trainer_config, model_name_pattern="ResNet val_acc"):
+    """
+    Scans inside models/saved_models/, and returns True if a saved model already exists with the specified
+    trainer_config.
+
+    The purpose of this is to prevent re-running the training during hyperparam search for configs that have already
+    been tested. We have to stop and start the script sometimes (GPU memory errors, etc), so we don't want to waste time
+    duplicating previously done work.
+
+    :param trainer_config:
+    :return:
+    """
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    saved_models_dir = os.path.join(project_root, "models/saved_models/")
+    completed_configs = list(glob.glob(
+            "{}/{} */trainer_config.json".format(saved_models_dir, model_name_pattern)
+        ))
+
+    for config_path in completed_configs:
+        with open(config_path) as handle:
+            config = json.loads(handle.read())
+            # print(config)
+            # print(trainer_config == config)
+            if trainer_config == config:
+                return True
+    return False
 
 class BasicTrainer(object):
 
@@ -166,7 +194,7 @@ class BasicTrainer(object):
 
         # Save trainer config:
         with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
-            json.dump(self.config, fp)
+            json.dump(self.config, fp, cls=CustJsonEncoder)
 
     def saveTrainingPlots(self, savedModelDir):
         """
@@ -191,3 +219,16 @@ class BasicTrainer(object):
         plt.legend()
         plt.savefig(os.path.join(savedModelDir, "learning_rate.png"))
         plt.close()
+
+
+
+class CustJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.integer):
+            return int(obj)
+        elif isinstance(obj, numpy.floating):
+            return float(obj)
+        elif isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        else:
+            return super(CustJsonEncoder, self).default(obj)
