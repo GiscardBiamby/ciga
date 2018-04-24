@@ -129,6 +129,7 @@ def resNetRandomSearch(numChoices=2):
 if __name__ == '__main__':
     cigaTraining.BasicTrainer.clearGpuSession()
     resNetRandomSearch()
+    # cigaTraining.BasicTrainer.gatherHyperParamResults("ResNet val_acc", "./resnet_hyperparam_results.csv")
 
 
 
