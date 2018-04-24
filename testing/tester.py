@@ -17,16 +17,16 @@ def test(model, img_dims=(50,50), grayscale=True,  rescale=1.0, shuffle=False, l
     - rescale: factor by which to scale the test images
     - shuffle: whether or not the test data should be shuffled
     - label: whether to test on age ('age') or gender ('gender)
-    - test_against: either 'IMDB', 'WIKI', or 'ADIENCE' ~ the dataset to test the model with
+    - test_against: either 'imdb', 'wiki', or 'adience' ~ the dataset to test the model with
     """
-    if test_against == 'ADIENCE':
+    if test_against == 'adience':
         path = '../datasets/processed/adience'
-    elif test_against == 'WIKI':
+    elif test_against == 'wiki':
         path = '../datasets/processed/wiki/'
-    elif test_against == 'IMDB':
+    elif test_against == 'imdb':
         path = '../datasets/processed/imdb'
     else:
-        print("Data set does not exist, please choose from: {'IMDB', 'WIKI', 'ADIENCE'}")
+        print("Data set does not exist, please choose from: {'imdb', 'wiki', 'adience'}")
         return
 
     path += '/age/' if label == 'age' else '/gender/'
