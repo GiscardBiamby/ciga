@@ -6,6 +6,7 @@ import training.trainer as cigaTraining
 from keras import optimizers
 import numpy as np
 import gc
+import keras
 
 ## TODO: Put all these params into trainer_config, so they get saved into trainer.config.json (see BasicTrainer.saveModel())
 def trainAndreyNet(dataset_path, architecture, trainer_config, epochs=1, img_size=50, batch_size=50, grayscale=True):
@@ -19,13 +20,18 @@ def trainAndreyNet(dataset_path, architecture, trainer_config, epochs=1, img_siz
     # Train:
     trainer = cigaTraining.BasicTrainer(model = model, config = trainer_config, enable_sms = False)
 
-    model = trainer.train(
-        validation_generator
-        , train_generator
-        , batch_size = batch_size
-        , epochs = epochs
-    )
-    trainer.saveModel('AndreyNet val_acc ' + str(max(model.history.history['val_acc'])))
+    try:
+        model = trainer.train(
+            validation_generator
+            , train_generator
+            , batch_size = batch_size
+            , epochs = epochs
+        )
+        trainer.saveModel('AndreyNet val_acc ' + str(max(model.history.history['val_acc'])))
+    except Exception as e:
+        print("ERROR while training model w/ config: ", trainer_config)
+        # Save to prevent tryign to re-run same config again:
+        trainer.saveModel('AndreyNet val_acc ERROR', saveConfigOnly=True)
 
     # Try to deal w/ GPU OOM errors:
     del model
@@ -42,10 +48,10 @@ def AndreyNetRandomSearch(numChoices=2):
     grayscale = True
     optimizer = 'adam'
 
-    batch_sizes = [64, 128, 256, 512]
-    num_stages = [2, 3, 4, 5]
-    num_layers = [2, 3, 4, 5]
-    num_denses = [1, 2, 3]
+    batch_sizes = [256, 128]
+    num_stages = [3, 4, 5]
+    num_layers = [3, 4, 5]
+    num_denses = [1, 2]
     dense_sizes = [256, 512, 1024]
     learning_rates = [0.001, 0.0001, 0.00001]
 
@@ -59,12 +65,12 @@ def AndreyNetRandomSearch(numChoices=2):
     # Should comment this out on the first script run for a given model. It's here in case we need to re-run the
     # script, so it can pick back up where it left off. On the first run of this for a model, copy the output from the
     # print statements in the block below and paste it here:
-    batch_sizes = [64, 128]
-    num_stages = [5, 4]
+    batch_sizes = [256, 128]
+    num_stages = [4, 3]
     num_layers = [4, 3]
-    num_denses = [1, 2]
-    dense_sizes = [512, 1024]
-    learning_rates = [0.001,   0.0001]
+    num_denses = [2, 1]
+    dense_sizes = [1024, 512, 256]
+    learning_rates = [1.00000000e-05,   1.00000000e-03]
 
     print("batch_sizes = {}".format(batch_sizes))
     print("num_stages = {}".format(num_stages))

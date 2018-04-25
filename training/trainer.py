@@ -181,12 +181,12 @@ class BasicTrainer(object):
                                       epochs=epochs,
                                       callbacks=self.callbacks,
                                       verbose=1,
-                                      use_multiprocessing=True,
+                                      use_multiprocessing=False,
                                       workers=2)
         return self.model
 
 
-    def saveModel(self, name):
+    def saveModel(self, name, saveConfigOnly=False):
         """
         This function should save as much info as possible about the model, as well as the model + weights.
         Make some kind of json file or similar, alongside the .h5 file. json should contain all the config info about
@@ -203,28 +203,31 @@ class BasicTrainer(object):
         if not os.path.exists(savedModelDir):
             os.makedirs(savedModelDir)
 
-        # Save model and weights:
-        self.model.save(os.path.join(savedModelDir, name + ".h5"))
-        with open(os.path.join(savedModelDir, 'model_architecture.json'), 'w') as f:
-            f.write(self.model.to_json())
+        if not saveConfigOnly:
+            # Save model and weights:
+            self.model.save(os.path.join(savedModelDir, name + ".h5"))
+            with open(os.path.join(savedModelDir, 'model_architecture.json'), 'w') as f:
+                f.write(self.model.to_json())
 
-        # Save summary:
-        with open(os.path.join(savedModelDir, 'model_summary.txt'), 'w') as fp:
-            self.model.summary(print_fn=lambda x: fp.write(x + '\n'))
+            # Save Plots:
+            self.saveTrainingPlots(savedModelDir)
+        else:
+            # Save summary:
+            with open(os.path.join(savedModelDir, 'model_summary.txt'), 'w') as fp:
+                self.model.summary(print_fn=lambda x: fp.write(x + '\n'))
 
-        # Save model diagram:
-        keras.utils.plot_model(self.model
-                               , to_file=os.path.join(savedModelDir, 'model.png')
-                               , show_shapes=True
-                               , show_layer_names=True
-                               , rankdir='TB'
-                               )
-        # Save Plots:
-        self.saveTrainingPlots(savedModelDir)
+            # Save model diagram:
+            keras.utils.plot_model(self.model
+                                   , to_file=os.path.join(savedModelDir, 'model.png')
+                                   , show_shapes=True
+                                   , show_layer_names=True
+                                   , rankdir='TB'
+                                   )
 
-        # Save trainer config:
-        with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
-            json.dump(self.config, fp, cls=CustJsonEncoder)
+
+            # Save trainer config:
+            with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
+                json.dump(self.config, fp, cls=CustJsonEncoder)
 
     def saveTrainingPlots(self, savedModelDir):
         """
