@@ -7,7 +7,7 @@ import os
 import json
 from keras.models import model_from_json, load_model
 import matplotlib.pyplot as plt
-from keras import optimizers
+from keras import optimizers, metrics
 import numpy
 import glob
 import collections, re, csv
@@ -16,6 +16,9 @@ import tensorflow as tf
 from keras import backend as K
 import gc
 
+## imports for off_by_one accuracy
+import keras.backend as K
+import tensorflow as tf
 
 # Maybe this should go into it's own file and/or class
 def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
@@ -72,6 +75,23 @@ def configHasAlreadyRun(trainer_config, model_name_pattern="ResNet val_acc"):
             if trainer_config == config:
                 return True
     return False
+
+
+def off_by_one_categorical_accuracy(y_true, y_pred):
+    num_classes =  K.int_shape(y_pred)[1]
+    
+    y_pred = K.argmax(y_pred, axis=-1)
+    y_true = K.argmax(y_true, axis=-1)
+    shifted_up = K.clip(y_true + 1, 0, num_classes)
+    shifted_down = K.clip(y_true - 1, 0, num_classes)
+    
+    comparison1 = tf.equal(y_true, y_pred)
+    comparison2 = tf.equal(shifted_up, y_pred)
+    comparison3 = tf.equal(shifted_down, y_pred)
+    
+    mask = tf.logical_or(comparison1, comparison2)
+    mask = tf.logical_or(mask, comparison3)
+    return K.cast(mask, K.floatx())
 
 class BasicTrainer(object):
 
@@ -145,9 +165,14 @@ class BasicTrainer(object):
             else:
                 raise NotImplementedError(self.config["optimizer"])
 
+        if train_generator.num_classes > 2:
+            metrics = ['accuracy', off_by_one_categorical_accuracy]
+        else:
+            metrics = ['accuracy']
+
         self.model.compile(optimizer=optimizer,
                     loss='categorical_crossentropy',
-                    metrics=['accuracy'])
+                    metrics=metrics)
 
         history = self.model.fit_generator(train_generator,
                                       validation_data=validation_generator,
