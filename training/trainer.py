@@ -232,7 +232,15 @@ class BasicTrainer(object):
         :param savedModelDir:
         :return:
         """
-        val_loss, val_acc, loss, acc, lr = self.model.history.history.values()
+        val_loss = self.model.history.history["val_loss"] 
+        val_acc = self.model.history.history["val_acc"] 
+        loss = self.model.history.history["loss"] 
+        acc = self.model.history.history["acc"] 
+        lr = self.model.history.history["lr"]
+
+        off_by_one_val_acc = self.model.history.history.get("val_off_by_one_categorical_accuracy", None)
+        off_by_one_acc = self.model.history.history.get("off_by_one_categorical_accuracy", None) 
+
         plt.plot(loss, label="loss")
         plt.plot(val_loss, label="val_loss")
         plt.legend()
@@ -244,6 +252,13 @@ class BasicTrainer(object):
         plt.legend()
         plt.savefig(os.path.join(savedModelDir, "accuracy.png"))
         plt.close()
+
+        if off_by_one_val_acc and off_by_one_acc:
+            plt.plot(off_by_one_acc, label="off_by_one_acc")
+            plt.plot(off_by_one_val_acc, label="off_by_one_val_acc")
+            plt.legend()
+            plt.savefig(os.path.join(savedModelDir, "off_by_one_accuracy.png"))
+            plt.close()
 
         plt.plot(lr, label="lr")
         plt.legend()
