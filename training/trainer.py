@@ -211,23 +211,22 @@ class BasicTrainer(object):
 
             # Save Plots:
             self.saveTrainingPlots(savedModelDir)
-        else:
-            # Save summary:
-            with open(os.path.join(savedModelDir, 'model_summary.txt'), 'w') as fp:
-                self.model.summary(print_fn=lambda x: fp.write(x + '\n'))
 
-            # Save model diagram:
-            keras.utils.plot_model(self.model
-                                   , to_file=os.path.join(savedModelDir, 'model.png')
-                                   , show_shapes=True
-                                   , show_layer_names=True
-                                   , rankdir='TB'
-                                   )
+        # Save summary:
+        with open(os.path.join(savedModelDir, 'model_summary.txt'), 'w') as fp:
+            self.model.summary(print_fn=lambda x: fp.write(x + '\n'))
 
+        # Save model diagram:
+        keras.utils.plot_model(self.model
+                               , to_file=os.path.join(savedModelDir, 'model.png')
+                               , show_shapes=True
+                               , show_layer_names=True
+                               , rankdir='TB'
+                               )
 
-            # Save trainer config:
-            with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
-                json.dump(self.config, fp, cls=CustJsonEncoder)
+        # Save trainer config:
+        with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
+            json.dump(self.config, fp, cls=CustJsonEncoder)
 
     def saveTrainingPlots(self, savedModelDir):
         """
