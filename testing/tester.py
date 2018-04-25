@@ -8,7 +8,7 @@ from sklearn.model_selection import KFold
 
 
 
-def test(model, img_dims=(50,50), grayscale=True,  rescale=1.0, shuffle=False, label='age', test_against='ADIENCE'):
+def test(model, img_dims=(50,50), grayscale=True,  rescale=1.0, shuffle=False, label='age', test_against='adience'):
     """
     Inputs:
     - model: a pre-trained Keras model

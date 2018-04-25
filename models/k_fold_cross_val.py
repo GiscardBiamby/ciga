@@ -1,11 +1,13 @@
+import sys
+sys.path.append('../')
 import os
 import numpy as np
 import argparse
-import sys
-sys.path.append('../')
 import models.vgg as cigaModels
 import training.trainer as cigaTraining
 from keras import optimizers
+from testing.confusion_mtx import *
+
 
 def k_fold_cross_val(dataset, k, label_type, trainer_config, epochs=1, img_size=50, batch_size=32, grayscale=True, weights=None):
     num_channels = 1 if grayscale else 3
@@ -22,17 +24,23 @@ def k_fold_cross_val(dataset, k, label_type, trainer_config, epochs=1, img_size=
         validation_generators += [valid]
     num_classes = train.num_classes
 
-
     # Build k Models:
     models = [cigaModels.getModel_vgg16(img_shape, num_classes) for _ in range(k)]
 
+    # Load pretrained weights:
     if weights:
         for i in range(k):
             models[i].load_weights(weights, by_name=False)
 
-    # Train:
+    # Train k models:
     trainers = [cigaTraining.BasicTrainer(model=models[i], config=trainer_config, enable_sms=False) for i in range(k)]
     models = [trainers[i].train(validation_generators[i], train_generators[i], batch_size=batch_size, epochs=epochs) for i in range(k)]
+
+    # Generate k+1 confusion matrices (+1 for total):
+    try:
+        confusion_mtx(models, validation_generators, model_name="VGG-16", k=k)
+    except:
+        print("confusion_mtx.py")
 
     for i in range(k):
         trainers[i].saveModel('VGG-16 fold %d validation accuracy ' % (i+1) + str(max(models[i].history.history['val_acc'])))
@@ -41,7 +49,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='File to complete k folds cross validation on input dataset (potentially with pretrained weights).')
     parser.add_argument('dataset', help='Dataset to use, either "adience", "imdb" or "wiki"')
-    parser.add_argument('k', help='The number of folds to use, typically k=5 or k=7')
+    parser.add_argument('k', type=int, help='The number of folds to use, typically k=5 or k=7')
     parser.add_argument('label_type', help="The label type to be used, either: 'age', 'age_gender' or 'gender'")
     parser.add_argument('-w', '--weights', help="File path to pretrained weights.")
     args = parser.parse_args()
