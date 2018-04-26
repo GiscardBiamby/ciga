@@ -73,6 +73,7 @@ def configHasAlreadyRun(trainer_config, model_name_pattern="ResNet val_acc"):
             # print(config)
             # print(trainer_config == config)
             if trainer_config == config:
+                print("Prev. config found at ", config_path)
                 return True
     return False
 
@@ -118,7 +119,9 @@ class BasicTrainer(object):
         # to only append this callback if the reduce_lr_params key exists in self.config:
         self.config["reduce_lr_params"]["verbose"] = True
         self.callbacks.append(ReduceLROnPlateau(**(self.config["reduce_lr_params"])))
-        self.callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto'))
+        early_stop_patience = self.config["early_stop_patience"] \
+            if "early_stop_patience" in self.config else 5
+        self.callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=early_stop_patience, verbose=1, mode='auto'))
 
         # Add if statement, or just make the caller use self.addCallback, since not everyoe will use this:
         if self.enable_sms:
