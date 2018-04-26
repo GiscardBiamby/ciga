@@ -39,7 +39,8 @@ modules.xml
 .DS_Store
 Thumbs.db
 
-# Specific to our project: 
+# Specific to our project:
+testing/confusion_matrices/
 datasets/raw/
 datasets/processed/
 datasets/equal_data/

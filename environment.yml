@@ -12,6 +12,7 @@ dependencies:
     - pydot
     - graphviz
     - Pillow
+    - sklearn
     - pip:
       - twilio
       - graphviz

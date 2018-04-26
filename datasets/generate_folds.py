@@ -18,13 +18,13 @@ def folderize(dataset, k, label_type):
         return
 
     if label_type == "age":
-        labels = ['/0-2', '/4-6', '/8-13', '/15-20', '/25-32', '/38-43', '/48-53', '/60-130']
+        labels = ['/0-2', '/4-6', '/8-12', '/15-20', '/25-32', '/38-43', '/48-53', '/60-130']
     elif label_type == "gender":
         labels = ['/female', '/male']
     elif label_type == "age_gender":
-        labels = ['/female_0-2', '/female_4-6', '/female_8-13', '/female_15-20',
+        labels = ['/female_0-2', '/female_4-6', '/female_8-12', '/female_15-20',
                   '/female_25-32', '/female_38-43', '/female_48-53', '/female_60-130']
-        labels += ['/male_0-2', '/male_4-6', '/male_8-13', '/male_15-20',
+        labels += ['/male_0-2', '/male_4-6', '/male_8-12', '/male_15-20',
                    '/male_25-32', '/male_38-43', '/male_48-53', '/male_60-130']
     else:
         print("Please enter either 'age', 'gender' or 'age_gender' as the third argument.")
@@ -61,7 +61,6 @@ def folderize(dataset, k, label_type):
             lst = from_path.split('/')
             to_path = to_valid + '/' + lst[-2] + '/' + lst[-1]
             shutil.copy(from_path, to_path)
-
 
 def main():
     parser = argparse.ArgumentParser(description='Break up processed datasets into folds.')

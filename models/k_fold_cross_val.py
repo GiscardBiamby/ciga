@@ -36,14 +36,12 @@ def k_fold_cross_val(dataset, k, label_type, trainer_config, epochs=1, img_size=
     trainers = [cigaTraining.BasicTrainer(model=models[i], config=trainer_config, enable_sms=False) for i in range(k)]
     models = [trainers[i].train(validation_generators[i], train_generators[i], batch_size=batch_size, epochs=epochs) for i in range(k)]
 
-    # Generate k+1 confusion matrices (+1 for total):
-    try:
-        confusion_mtx(models, validation_generators, model_name="VGG-16", k=k)
-    except:
-        print("confusion_mtx.py")
-
+    # Save k models:
     for i in range(k):
         trainers[i].saveModel('VGG-16 fold %d validation accuracy ' % (i+1) + str(max(models[i].history.history['val_acc'])))
+
+    # Generate k+1 confusion matrices (+1 for matrix across all folds):
+    confusion_mtx(models, validation_generators, model_name="VGG-16", k=k)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -55,8 +53,8 @@ def main():
     args = parser.parse_args()
     grayscale = True
     img_size = 224
-    batch_size = 64
-    epochs = 1
+    batch_size = 128
+    epochs = 20
     trainer_config = {
         "reduce_lr_params": {
             "factor": 0.2
