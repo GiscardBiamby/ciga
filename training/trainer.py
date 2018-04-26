@@ -303,9 +303,13 @@ class BasicTrainer(object):
 
                 # Get val_acc from file_path (hacky):
                 val_acc = re.search("val_acc [\d\.]*-", config_path)
-                val_acc = val_acc.group(0).replace("-", "").replace(" ", "").replace("val_acc", "")
+                if val_acc is not None :
+                    val_acc = val_acc.group(0).replace("-", "").replace(" ", "").replace("val_acc", "")
+                else:
+                    val_acc = "ERROR"
                 config["val_acc"] = val_acc
 
+                if not "verbose" in config["reduce_lr_params"]: config["reduce_lr_params"]["verbose"] = ""
                 all_configs.append(BasicTrainer.flattenJson(config))
 
         # Write as csv:
@@ -313,6 +317,7 @@ class BasicTrainer(object):
             w = csv.DictWriter(csv_file, all_configs[0].keys())
             w.writeheader()
             for config in all_configs:
+                print(config)
                 w.writerow(config)
 
 

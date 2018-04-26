@@ -131,6 +131,7 @@ def AndreyNetRandomSearch(numChoices=2):
 if __name__ == '__main__':
     cigaTraining.BasicTrainer.clearGpuSession()
     AndreyNetRandomSearch()
+    # cigaTraining.BasicTrainer.gatherHyperParamResults("AndreyNet val_acc", "./andreynet_hyperparam_results.csv")
 
 
 
