@@ -44,8 +44,9 @@ The keras code uses .flow_from_directory(), which expects all images to be in su
 ```bash
 cd datasets
 python populate_subfolders.py
-python process_wiki_imdb_data.py
+python process_wiki_imdb_data.py [--createMerged]
 ```
+Note: the --createMerged flag is optional. By default the script doesn't create the combined imdb+wiki dataset, but if you specify this flag it will create imdb+wiki merged and put it in ./datasets/processed/imdbwiki/. 
 
 #### 3b. (Optional) K Folds Dataset Pre-processing
 
