@@ -4,7 +4,8 @@ from scipy import io as sio
 import pandas as pd
 from shutil import copyfile
 from datetime import datetime, timedelta
-
+import argparse
+import distutils.dir_util
 
 valid_ration = 10
 
@@ -172,7 +173,7 @@ def make_age_gender_dataset(raw_images_path, dataset_name, data, age_partitions)
 
 def create_datasets(metadata_path, raw_images_path, metadata_dict_key, age=True, gender=True, gender_age=True):
 	proccesed_data = proccess_mat(metadata_path, metadata_dict_key)
-	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 130]]
+	age_partitions = [[0, 2], [4, 6], [8, 12], [15, 20], [25, 32], [38, 43], [48, 53], [60, 100]]
 	if age:
 		make_gender_dataset(raw_images_path, metadata_dict_key, proccesed_data)
 		print("Done creating gender dataset")
@@ -186,18 +187,54 @@ def create_datasets(metadata_path, raw_images_path, metadata_dict_key, age=True,
 		print("Done creating age+gender dataset")
 		print('=================================================================')
 
+def create_merged():
+	print('=================================================================')
+	print("Creating imdb+wiki dataset...")
+	imdb_dir = "./processed/imdb/"
+	wiki_dir = "./processed/wiki/"
+	target_dir = "./processed/imdbwiki/"
+
+	if not os.path.exists(target_dir):
+		os.makedirs(target_dir)
+
+	print("Copying imdb...")
+	distutils.dir_util.copy_tree(imdb_dir, target_dir)
+	print("Copying wiki...")
+	distutils.dir_util.copy_tree(wiki_dir, target_dir)
+
+
+	print('=================================================================')
+
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser(description='Setup folder structure for imdb and wiki face datasets for use by '
+												 'keras flow_from_directory(), so that images are organized on disk '
+												 'by subfolders inside of subfolders like: '
+												 './datasets/processed/<dataset_name>/<age_or_gender'
+												 '>/<ground_truth_label>/.')
+	parser.add_argument(
+		'--createMerged'
+		, default=False
+		, action='store_true'
+		, required=False
+		, help='If specified, will also combine the two datasets into one "imdbwiki" dataset. Default is False '
+			   'because it can take up a lot of space.'
+	)
+	args = parser.parse_args()
 	create_datasets(
         metadata_path='./raw/wiki/wiki/wiki.mat'
         , raw_images_path = './raw/wiki_crop/wiki_crop/'
         , metadata_dict_key="wiki"
         , age=True
         , gender=True
-        , gender_age=True)
+        , gender_age=True
+	)
 	create_datasets(
         metadata_path='./raw/imdb_meta/imdb/imdb.mat'
         , raw_images_path = './raw/imdb_crop/imdb_crop/'
         , metadata_dict_key="imdb"
         , age=True
         , gender=True
-        , gender_age=True)
+        , gender_age=True
+	)
+	if args.createMerged:
+		create_merged()
