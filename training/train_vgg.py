@@ -8,7 +8,7 @@ import numpy as np
 import gc
 import keras
 
-model_key = "vgg16 val_acc "
+model_key = "vgg16_age val_acc "
 
 ## TODO: Put all these params into trainer_config, so they get saved into trainer.config.json (see BasicTrainer.saveModel())
 def trainVgg16(dataset_path, trainer_config, epochs=1, img_size=50, batch_size=32, grayscale=True):
@@ -52,9 +52,9 @@ def trainVgg16(dataset_path, trainer_config, epochs=1, img_size=50, batch_size=3
 
 
 def Vgg16RandomSearch(numChoices=2):
-    dataset_path = '../datasets/processed/wiki/gender/'
+    dataset_path = '../datasets/processed/wiki/age/'
 
-    epochs = 20
+    epochs = 35
 
     img_size = 224
     grayscale = True
@@ -62,8 +62,8 @@ def Vgg16RandomSearch(numChoices=2):
     batch_sizes = [80]
     optimizers = ["sgd"]
     learning_rates = [1e-1]
-    decay_rates = [5e-3, 5e-4, 5e-5]
-    momentums = [.95, .90, .85]
+    decay_rates = [5e-3]
+    momentums = [.975, .95001, .925, .90001, .875, .85001]
 
     print("batch_sizes = {}".format(batch_sizes))
     print("optimizers = {}".format(optimizers))
