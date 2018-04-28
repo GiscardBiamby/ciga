@@ -12,7 +12,7 @@ from testing.confusion_mtx import *
 def k_fold_cross_val(dataset, k, label_type, trainer_config, epochs=1, img_size=50, batch_size=32, grayscale=True, weights=None):
     num_channels = 1 if grayscale else 3
     img_shape = (img_size, img_size, num_channels)
-    fold_paths = "../datasets/processed/" + dataset + "/" + label_type + "/fold_"
+    fold_paths = "../datasets/processed/" + dataset + "/" + label_type + "_fold_"
     fold_paths = [fold_paths + str(i) + "/" for i in range(1, k+1)]
 
     # Build k data generators:

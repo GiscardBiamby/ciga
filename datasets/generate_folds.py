@@ -5,7 +5,7 @@ from random import shuffle
 def folderize(dataset, k, label_type):
     root = os.path.dirname(os.path.abspath(__file__))
     outside_folds = os.path.join(root, "processed/" + dataset + "/" + label_type)
-    train_paths, valid_paths, fold_paths = outside_folds, None, outside_folds + "/fold_"
+    train_paths, valid_paths, fold_paths = outside_folds, None, outside_folds + "_fold_"
     fold_paths = [fold_paths + str(i) for i in range(1, k+1)]
     to_train_paths, to_valid_paths = [fold + '/train' for fold in fold_paths], [fold + '/valid' for fold in fold_paths]
     fold_paths = to_train_paths + to_valid_paths

@@ -33,6 +33,7 @@ def confusion_mtx(model, test_generator, model_name="VGG-16", k=None):
         for i in range(k):
             predictions = model[i].predict_generator(test_generator[i], use_multiprocessing=True)
             predictions = predictions.argmax(axis=-1)
+            print(test_generator[i].classes)
             true_labels = np.array(test_generator[i].classes)
             confusion_mat = np.array(confusion_matrix(true_labels, predictions))
             if i == 0:
