@@ -97,8 +97,9 @@ def sample_adience_images(adience_images, num_samples, age_group):
         # Each image from the adience_images might have multiple coarse_tilt_aligned versions on disk,
         # so this glob might return multiple files for one image from the images numpy array (hence the break
         # condition at top of loop):
-        sampled_images.append({"paths": glob.glob("{}/*{}".format(img_path, img[1])), "img": img })
-        sampled_count += len(sampled_images[-1]["paths"])
+        paths = glob.glob("{}/*{}".format(img_path, img[1]))
+        sampled_images.append({"paths": paths, "img": img })
+        sampled_count += len(paths)
         sampled_indexes.append(idx)
 
     print("age_group:'{}', #sampled_imgs: {}, #sampled_idxs: {}".format(age_group, sampled_count, len(sampled_indexes)))
@@ -118,7 +119,7 @@ def get_age(img):
     return None
 
 
-def augment_img(datagen, target_dir, img, counts):
+def augment_img(datagen, target_dir, img, counts, train_or_valid):
     """
 
     :param datagen:
@@ -131,6 +132,26 @@ def augment_img(datagen, target_dir, img, counts):
     aug_count = 0
     # print("\taugmenting img target path: ", target_dir)
 
+
+    train_dir = target_dir\
+        .replace("age_gender/", "age_gender/train/")\
+        .replace("gender/", "gender/train/")\
+        .replace("age/", "age/train/")
+    val_dir = target_dir\
+        .replace("age_gender/", "age_gender/valid/")\
+        .replace("gender/", "gender/valid/")\
+        .replace("age/", "age/valid/")
+
+    if not os.path.exists(train_dir):
+        os.makedirs(train_dir)
+    if not os.path.exists(val_dir):
+        os.makedirs(val_dir)
+
+    # print("train_dir: ", train_dir)
+    # print("val_dir: ", val_dir)
+    target_dir = train_dir if train_or_valid == "train" else val_dir
+    # print("target_dir: ", target_dir)
+
     if target_dir not in counts:
         counts[target_dir] = 0
 
@@ -139,7 +160,6 @@ def augment_img(datagen, target_dir, img, counts):
             break
         aug_count += 1
         counts[target_dir] += 1
-    # print("\taug_count: ", counts[target_dir])
 
 
 def augment_and_move(
@@ -155,8 +175,14 @@ def augment_and_move(
     :return:
     """
 
+    VALID_RATIO = 10
+    num_samples = sum([len(s["paths"]) for s in sampled_images])
+    valid_start_index =  num_samples//VALID_RATIO
+    print("num_samples, valid_ratio: ", num_samples, num_samples//VALID_RATIO)
+    num_train, num_valid = 0, 0
     num_deleted = 0
     processed = []
+    i = 0
     for sample in sampled_images:
         img_paths, img_data = sample["paths"], sample["img"]
         for img_path in img_paths:
@@ -165,23 +191,36 @@ def augment_and_move(
             x = img_to_array(img)
             x = x.reshape((1,) + x.shape)
             gender, age = get_gender(img_data), get_age(img_data)
-            if gender=="m":
-                augment_img(datagen, male_dir, x, counts)
-                augment_img(datagen, age_dir + age, x, counts)
-                augment_img(datagen, age_gender_dir + 'male_' + age, x, counts)
-            elif gender=="f":
-                augment_img(datagen, female_dir, x, counts)
-                augment_img(datagen, age_dir + age, x, counts)
-                augment_img(datagen, age_gender_dir + 'female_' + age, x, counts)
+
+            # Is this img in the train or val split?
+            if i < valid_start_index:
+                train_or_valid = "valid"
+                num_valid += 1
             else:
-                augment_img(datagen, age_dir + age, x, counts)
+                train_or_valid = "train"
+                num_train += 1
+            # print("train_or_valid: ", train_or_valid)
+
+            if gender=="m":
+                augment_img(datagen, male_dir, x, counts, train_or_valid)
+                augment_img(datagen, age_dir + age, x, counts, train_or_valid)
+                augment_img(datagen, age_gender_dir + 'male_' + age, x, counts, train_or_valid)
+            elif gender=="f":
+                augment_img(datagen, female_dir, x, counts, train_or_valid)
+                augment_img(datagen, age_dir + age, x, counts, train_or_valid)
+                augment_img(datagen, age_gender_dir + 'female_' + age, x, counts, train_or_valid)
+            else:
+                augment_img(datagen, age_dir + age, x, counts, train_or_valid)
             processed.append(img_path)
             num_deleted += 1
+            i += 1
 
+    print("num_train, num_valid: ", num_train, num_valid)
     print("Deleting {} imgs from adience raw".format(len(processed)))
     for img in processed:
-        if os.exists(img):
+        if os.path.exists(img):
             os.remove(img)
+            pass
 
     return num_deleted
 
@@ -202,27 +241,23 @@ def main():
 
     root = os.path.dirname(os.path.abspath(__file__))
     raw_path = os.path.join(root, "raw")
-    processed_path = os.path.join(root, "processed/wiki")
+    target_path = os.path.join(root, "processed/wiki")
 
-    gender, age, age_gender = processed_path + '/gender', processed_path + '/age', processed_path + '/age_gender'
+    gender, age, age_gender = target_path + '/gender', target_path + '/age', target_path + '/age_gender'
     paths = [gender, age, age_gender] + [gender + '/female', gender + '/male']
-    paths += [age + p for p in ['/0-2', '/4-6', '/8-12', '/15-20', '/25-32', '/38-43', '/48-53', '/60-100']]
-    paths += [age_gender + p for p in ['/male_0-2', '/male_4-6', '/male_8-12', '/male_15-20', '/male_25-32', '/male_38-43', '/male_48-53', '/male_60-100']]
-    paths += [age_gender + p for p in ['/female_0-2', '/female_4-6', '/female_8-12', '/female_15-20', '/female_25-32', '/female_38-43', '/female_48-53', '/female_60-100']]
+    paths += [age + p for p in ['/0-2', '/4-6', '/8-12', '/15-20', '/25-32', '/38-43', '/48-53', '/60-130']]
+    paths += [age_gender + p for p in ['/male_0-2', '/male_4-6', '/male_8-12', '/male_15-20', '/male_25-32',
+                                       '/male_38-43', '/male_48-53', '/male_60-130']]
+    paths += [age_gender + p for p in ['/female_0-2', '/female_4-6', '/female_8-12', '/female_15-20',
+                                       '/female_25-32', '/female_38-43', '/female_48-53', '/female_60-130']]
 
-    for p in paths:
-        print("path: ", p)
-        if not os.path.exists(p):
-            os.makedirs(p)
-
-    male, female, age_path = processed_path + '/gender/male', processed_path + '/gender/female', processed_path + '/age/'
-    print("processed_path: ", processed_path)
+    male, female, age_path = target_path + '/gender/male', target_path + '/gender/female', target_path + '/age/'
+    print("processed_path: ", target_path)
     print("male, female, age_path : ", male, female, age_path )
 
     age_groups = {"0-2":0, "4-6":0, "8-12":0, "15-20":0}
     # how many samples to move from adience, for each age_group:
     NUM_SAMPLES = 200
-
 
     # Load all the adience image info into a single numpy matrix:
     adience_images, adience_img_count = load_all_folds_info(raw_path, age_groups)
