@@ -47,30 +47,41 @@ def load_all_folds_info(raw_path, age_groups):
     # print("adience_images.shape: ", adience_images.shape)
 
     # Filter some data:
+    before = adience_images.shape[0]
     keep = [False]*adience_images.shape[0]
     for idx, img in enumerate(adience_images):
         age = get_age(img)
         if age is not None and age in age_groups.keys():
             keep[idx] = True
     adience_images = adience_images[keep]
+    after = adience_images.shape[0]
+    # print("Removed {} images on age filtering".format(after-before))
+
 
     adience_img_count = adience_images.shape[0]
     return adience_images, adience_img_count
 
 
-def sample_adience_images(adience_images, adience_indexes, num_samples):
+def sample_adience_images(adience_images, num_samples, age_group):
     """
 
     :param adience_images: 2d np array of img info from adience .txt files
     :param adience_indexes: list of indexes into adience_images that haven't been sampled yet
     :param num_samples: # samples to take
-    :return: tuple:
-                [0]: sampled_indexes, indexes that were sampled
-                [1]:
+    :return: list of sampled images. Each item in list is a dictionary. key/val map:
+                ["paths"]: list of paths for sampled image
+                ["img"]: row from adience_images np array corresponding to the sampled image
     """
 
+    age_low, age_hi = age_group.split("-")
+    age_low, age_hi = int(age_low), int(age_hi)
+    age_bucket = "({}, {})".format(age_low, age_hi)
+    adience_agegroup = adience_images[adience_images[:,3]==age_bucket]
+    print("Total images for age_group {}: {}".format(age_group, adience_agegroup.shape[0]))
+
     # Choose num_samples images to move:
-    sampled_indexes_candidates = np.random.choice(adience_indexes, size=num_samples, replace=False)
+    adience_agegroup_indexes = list(range(adience_agegroup.shape[0]))
+    sampled_indexes_candidates = np.random.choice(adience_agegroup_indexes, size=num_samples, replace=False)
 
     # Gather paths of images we will augment and move:
     sampled_images = []  # images we will augment and move
@@ -90,8 +101,8 @@ def sample_adience_images(adience_images, adience_indexes, num_samples):
         sampled_count += len(sampled_images[-1]["paths"])
         sampled_indexes.append(idx)
 
-    print("#sampled_images: {}, #sampled_indexes: {}".format(sampled_count, len(sampled_indexes)))
-    return sampled_indexes, sampled_images
+    print("age_group:'{}', #sampled_imgs: {}, #sampled_idxs: {}".format(age_group, sampled_count, len(sampled_indexes)))
+    return sampled_images
 
 
 def get_gender(img):
@@ -145,6 +156,7 @@ def augment_and_move(
     """
 
     num_deleted = 0
+    processed = []
     for sample in sampled_images:
         img_paths, img_data = sample["paths"], sample["img"]
         for img_path in img_paths:
@@ -163,9 +175,14 @@ def augment_and_move(
                 augment_img(datagen, age_gender_dir + 'female_' + age, x, counts)
             else:
                 augment_img(datagen, age_dir + age, x, counts)
-            os.remove(img_path)
+            processed.append(img_path)
             num_deleted += 1
-    print("Finished augmenting, Counts: ", counts)
+
+    print("Deleting {} imgs from adience raw".format(len(processed)))
+    for img in processed:
+        if os.exists(img):
+            os.remove(img)
+
     return num_deleted
 
 
@@ -202,7 +219,7 @@ def main():
     print("processed_path: ", processed_path)
     print("male, female, age_path : ", male, female, age_path )
 
-    age_groups = {"0-2":0, "4-6":0, "8-13":0, "15-20":0}
+    age_groups = {"0-2":0, "4-6":0, "8-12":0, "15-20":0}
     # how many samples to move from adience, for each age_group:
     NUM_SAMPLES = 200
 
@@ -210,16 +227,13 @@ def main():
     # Load all the adience image info into a single numpy matrix:
     adience_images, adience_img_count = load_all_folds_info(raw_path, age_groups)
 
-    # vars to track indexes:
-    adience_indexes = list(range(adience_img_count))
-    print("Adience_indexes length: ", len(adience_indexes))
 
     # For each age_group, sample images from adience, and move to wiki:
     counts = {}
     num_deleted = 0
     for age_group, age_group_count in age_groups.items():
         print("Sampling from adience for age_group: ", age_group)
-        sampled_indexes, sampled_images = sample_adience_images(adience_images, adience_indexes, NUM_SAMPLES)
+        sampled_images = sample_adience_images(adience_images, NUM_SAMPLES, age_group)
         num_deleted_tmp = augment_and_move(
             sampled_images
             , datagen
@@ -230,10 +244,6 @@ def main():
 
         print("Finished augment&move for age_group:'{}'. Deleted from adience: {}".format(age_group, num_deleted_tmp))
         print("Num images sampled: ", sum([len(s["paths"]) for s in sampled_images]))
-
-        # Remove the sampled indexes from the full set of indexes:
-        adience_indexes = np.setdiff1d(adience_indexes, sampled_indexes)
-        print("Adience_indexes length: ", len(adience_indexes))
         print()
 
     print("augmented counts: ", counts)
