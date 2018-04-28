@@ -220,21 +220,23 @@ if __name__ == '__main__':
 			   'because it can take up a lot of space.'
 	)
 	args = parser.parse_args()
-	create_datasets(
-        metadata_path='./raw/wiki/wiki/wiki.mat'
-        , raw_images_path = './raw/wiki_crop/wiki_crop/'
-        , metadata_dict_key="wiki"
-        , age=True
-        , gender=True
-        , gender_age=True
-	)
-	create_datasets(
-        metadata_path='./raw/imdb_meta/imdb/imdb.mat'
-        , raw_images_path = './raw/imdb_crop/imdb_crop/'
-        , metadata_dict_key="imdb"
-        , age=True
-        , gender=True
-        , gender_age=True
-	)
-	if args.createMerged:
+
+	if not args.createMerged:
+		create_datasets(
+			metadata_path='./raw/wiki/wiki/wiki.mat'
+			, raw_images_path = './raw/wiki_crop/wiki_crop/'
+			, metadata_dict_key="wiki"
+			, age=True
+			, gender=True
+			, gender_age=True
+		)
+		create_datasets(
+			metadata_path='./raw/imdb_meta/imdb/imdb.mat'
+			, raw_images_path = './raw/imdb_crop/imdb_crop/'
+			, metadata_dict_key="imdb"
+			, age=True
+			, gender=True
+			, gender_age=True
+		)
+	else:
 		create_merged()

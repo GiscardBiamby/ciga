@@ -37,7 +37,7 @@ The files are extracted into `./<project-root>/datasets/<filename>/*`, where ``<
 
 ## 3. Process Datasets
 
-### Partition Data:
+### 3a. Partition Data:
 
 The keras code uses .flow_from_directory(), which expects all images to be in subfolders according to their ground-truth labels. These scripts partition the various datasets according to that expectation. The partitioned data goes into ./datasets/processed/[dataset\_name]/[partition\_scheme]/. [partition\_scheme] describes a certain partitioning scheme for the data. There are three partition schemes: by age, by gender, or by age_gender (both together).
 
@@ -48,7 +48,15 @@ python process_wiki_imdb_data.py [--createMerged]
 ```
 Note: the --createMerged flag is optional. By default the script doesn't create the combined imdb+wiki dataset, but if you specify this flag it will create imdb+wiki merged and put it in ./datasets/processed/imdbwiki/. 
 
-#### 3b. (Optional) K Folds Dataset Pre-processing
+### 3b. Augment data
+Permanently move some data from adience dataset to the imdb/wiki ones so that the distributions are more even. 
+
+```bash
+cd datasets
+python augment_data.py
+```
+
+### 3c. (Optional) K Folds Dataset Pre-processing
 
 If you intend to use K folds cross validation on a specific dataset, please accomplish the following pre-processing step before attempting to do so:
 
