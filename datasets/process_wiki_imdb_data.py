@@ -119,6 +119,7 @@ def make_age_dataset(raw_images_path, dataset_name, data, age_partitions):
 	print("train dir: {}, valid_dir: ".format(train_directory, valid_directory))
 
 	for age_partition in age_partitions:
+		print("Creating age partition: ", age_partition)
 		lower, upper = age_partition
 		class_name = str(lower) + '-' + str(upper)
 
@@ -173,7 +174,7 @@ def make_age_gender_dataset(raw_images_path, dataset_name, data, age_partitions)
 
 def create_datasets(metadata_path, raw_images_path, metadata_dict_key, age=True, gender=True, gender_age=True):
 	proccesed_data = proccess_mat(metadata_path, metadata_dict_key)
-	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 100]]
+	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 130]]
 	if age:
 		make_gender_dataset(raw_images_path, metadata_dict_key, proccesed_data)
 		print("Done creating gender dataset")
