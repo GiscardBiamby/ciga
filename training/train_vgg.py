@@ -123,3 +123,5 @@ def Vgg16RandomSearch(numChoices=2):
 if __name__ == '__main__':
     cigaTraining.BasicTrainer.clearGpuSession()
     Vgg16RandomSearch()
+    # cigaTraining.BasicTrainer.gatherHyperParamResults("vgg16_gender", "./vgg16_hyperparam_results_gender_wiki.csv")
+

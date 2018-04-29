@@ -132,15 +132,15 @@ def augment_img(datagen, target_dir, img, counts, train_or_valid):
     aug_count = 0
     # print("\taugmenting img target path: ", target_dir)
 
-
+    # print("target_dir: ", target_dir)
     train_dir = target_dir\
         .replace("age_gender/", "age_gender/train/")\
-        .replace("gender/", "gender/train/")\
-        .replace("age/", "age/train/")
+        .replace("/gender/", "/gender/train/")\
+        .replace("/age/", "/age/train/")
     val_dir = target_dir\
         .replace("age_gender/", "age_gender/valid/")\
-        .replace("gender/", "gender/valid/")\
-        .replace("age/", "age/valid/")
+        .replace("/gender/", "/gender/valid/")\
+        .replace("/age/", "/age/valid/")
 
     if not os.path.exists(train_dir):
         os.makedirs(train_dir)
@@ -186,7 +186,7 @@ def augment_and_move(
     for sample in sampled_images:
         img_paths, img_data = sample["paths"], sample["img"]
         for img_path in img_paths:
-            print("augmenting img: ", img_path)
+            # print("augmenting img: ", img_path)
             img = load_img(img_path)
             x = img_to_array(img)
             x = x.reshape((1,) + x.shape)
@@ -218,9 +218,12 @@ def augment_and_move(
     print("num_train, num_valid: ", num_train, num_valid)
     print("Deleting {} imgs from adience raw".format(len(processed)))
     for img in processed:
-        if os.path.exists(img):
+        if os.path.exists(img) and img.endswith(".jpg"):
             os.remove(img)
+            print("Deleting ", img)
             pass
+        else:
+            print("Not removing: ", img)
 
     return num_deleted
 
@@ -238,7 +241,6 @@ def main():
         vertical_flip=False,
         horizontal_flip=True
     )
-
     root = os.path.dirname(os.path.abspath(__file__))
     raw_path = os.path.join(root, "raw")
     target_path = os.path.join(root, "processed/wiki")
