@@ -43,20 +43,43 @@ The keras code uses .flow_from_directory(), which expects all images to be in su
 
 ```bash
 cd datasets
+python process_wiki_imdb_data.py 
+
+python augment_data.py
+# Run these if script creates "8-12" folders: 
+mv -v ./processed/wiki/age/train/8-12/* ./processed/wiki/age/train/8-13/
+mv -v ./processed/wiki/age/valid/8-12/* ./processed/wiki/age/valid/8-13/
+rmdir ./processed/wiki/age/train/8-12/
+rmdir ./processed/wiki/age/valid/8-12/
+mv -v ./processed/wiki/age_gender/train/female_8-12/* ./processed/wiki/age_gender/train/female_8-13/
+mv -v ./processed/wiki/age_gender/valid/female_8-12/* ./processed/wiki/age_gender/valid/female_8-13/
+mv -v ./processed/wiki/age_gender/train/male_8-12/* ./processed/wiki/age_gender/train/male_8-13/
+mv -v ./processed/wiki/age_gender/valid/male_8-12/* ./processed/wiki/age_gender/valid/male_8-13/
+rmdir ./processed/wiki/age_gender/train/female_8-12/
+rmdir ./processed/wiki/age_gender/valid/female_8-12/
+rmdir ./processed/wiki/age_gender/train/male_8-12/
+rmdir ./processed/wiki/age_gender/valid/male_8-12/
+
 python populate_subfolders.py
-python process_wiki_imdb_data.py [--createMerged]
+# Run these if script creates "8-12" folders: 
+mv ./processed/adience/age/8-12/ ./processed/adience/age/8-13/
+mv ./processed/adience/age_gender/female_8-12/ ./processed/adience/age_gender/female_8-13/
+mv ./processed/adience/age_gender/male_8-12/ ./processed/adience/age_gender/male_8-13/
+
+# Fix adience oldest age bucket to match what we use for wiki/imdb: 
+mv ./processed/adience/age/60-100/ ./processed/adience/age/60-130/
+mv ./processed/adience/age_gender/female_60-100/ ./processed/adience/age_gender/female_60-130/
+mv ./processed/adience/age_gender/male_60-100/ ./processed/adience/age_gender/male_60-130/
+
+python process_wiki_imdb_data.py --createMerged
 ```
 Note: the --createMerged flag is optional. By default the script doesn't create the combined imdb+wiki dataset, but if you specify this flag it will create imdb+wiki merged and put it in ./datasets/processed/imdbwiki/. 
 
-### 3b. Augment data
-Permanently move some data from adience dataset to the imdb/wiki ones so that the distributions are more even. 
+augment_data.py Permanently moves some data from adience dataset to the wiki one so that the distributions are more even. 
 
-```bash
-cd datasets
-python augment_data.py
-```
 
-### 3c. (Optional) K Folds Dataset Pre-processing
+
+### 3b. (Optional) K Folds Dataset Pre-processing
 
 If you intend to use K folds cross validation on a specific dataset, please accomplish the following pre-processing step before attempting to do so:
 
