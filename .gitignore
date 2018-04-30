@@ -46,3 +46,4 @@ datasets/processed/
 datasets/equal_data/
 *.backup
 training/logs/
+**/logs/

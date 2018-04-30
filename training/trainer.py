@@ -15,10 +15,8 @@ import collections, re, csv
 import tensorflow as tf
 from keras import backend as K
 import gc
+import pickle
 
-## imports for off_by_one accuracy
-import keras.backend as K
-import tensorflow as tf
 
 # Maybe this should go into it's own file and/or class
 def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=True):
@@ -230,6 +228,13 @@ class BasicTrainer(object):
         # Save trainer config:
         with open(os.path.join(savedModelDir, 'trainer_config.json'), 'w') as fp:
             json.dump(self.config, fp, cls=CustJsonEncoder)
+
+        # Save history:
+        with open(os.path.join(savedModelDir, 'traininghist.pickle'), 'wb') as fp:
+            pickle.dump(self.model.history.history, fp)
+        # Ex of loading training hist:
+        #   import pickle
+        #   hist = pickle.load(open("./models/saved_models/.../traininghist.pickle", "rb"))
 
     def saveTrainingPlots(self, savedModelDir):
         """
