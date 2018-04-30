@@ -41,7 +41,12 @@ def train(
         raise NotImplementedError("Unknown architecture: ", model_key)
 
     # Train:
-    trainer = cigaTraining.BasicTrainer(model=model, config=trainer_config, enable_sms=ENABLE_SMS)
+    trainer = cigaTraining.BasicTrainer(
+        model=model
+        , config=trainer_config
+        , enable_sms=ENABLE_SMS
+        , enable_checkpoints=ENABLE_CHECKPOINTS
+    )
 
     try:
         model = trainer.train(
@@ -173,8 +178,8 @@ def trainToConvergence():
 if __name__ == '__main__':
     cigaTraining.BasicTrainer.clearGpuSession()
     trainToConvergence()
-    # cigaTraining.BasicTrainer.gatherHyperParamResults("AndreyNet val_acc", "./andreynet_hyperparam_results.csv")
-
+    # BasicTrainer.gatherHyperParamResults("AndreyNet val_acc", "./andreynet_hyperparam_results.csv")
+    # started: 11:50pm
 
 
 

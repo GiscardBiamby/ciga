@@ -32,12 +32,14 @@ def plot_confusion(mtx, name, label_dct):
     plt.savefig(path)
 
 
-def confusion_mtx(model, test_generator, model_name="VGG-16", k=None):
+def confusion_mtx(model, test_generator, model_name, label_type, k=None):
     if k:
         total = None
         for i in range(k):
             predictions = model[i].predict_generator(test_generator[i], use_multiprocessing=True)
             label_dct = dict((v, k) for k, v in test_generator[i].class_indices.items())
+            print("Predictions: ", type(predictions), predictions)
+            # print("len(pred): ", len(predictions))
             predictions = [label_dct[entry] for entry in predictions.argmax(axis=-1)]
             true_labels = [label_dct[entry] for entry in test_generator[i].classes]
             confusion_mat = np.array(confusion_matrix(true_labels, predictions, list(label_dct.values())))
@@ -45,8 +47,9 @@ def confusion_mtx(model, test_generator, model_name="VGG-16", k=None):
                 total = confusion_mat
             else:
                 total += confusion_mat
-            plot_confusion(confusion_mat, model_name + "_confusion_mtx_fold_%d" % (i+1) + ".png", label_dct)
-        plot_confusion(total, model_name + "_confusion_mtx_all_%d_folds.png" % k, label_dct)
+            plot_confusion(confusion_mat, model_name + "_" + label_type + "_confusion_mtx_fold_%d" % (i+1) + ".png",
+                           label_dct)
+        plot_confusion(total, model_name + "_" + label_type + "_confusion_mtx_all_%d_folds.png" % k, label_dct)
 
     else:
         predictions = model.predict_generator(test_generator, use_multiprocessing=True)
@@ -54,4 +57,4 @@ def confusion_mtx(model, test_generator, model_name="VGG-16", k=None):
         predictions = [label_dct[entry] for entry in predictions.argmax(axis=-1)]
         true_labels = [label_dct[entry] for entry in test_generator.classes]
         confusion_mat = np.array(confusion_matrix(true_labels, predictions, list(label_dct.values())))
-        plot_confusion(confusion_mat, model_name + "_confusion_mtx.png", label_dct)
+        plot_confusion(confusion_mat, model_name + "_" + label_type + "_confusion_mtx.png", label_dct)
