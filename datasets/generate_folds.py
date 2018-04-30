@@ -18,13 +18,13 @@ def folderize(dataset, k, label_type):
         return
 
     if label_type == "age":
-        labels = ['/a_0-2', '/b_4-6', '/c_8-12', '/d_15-20', '/e_25-32', '/f_38-43', '/g_48-53', '/h_60-130']
+        labels = ['/a_0-2', '/b_4-6', '/c_8-13', '/d_15-20', '/e_25-32', '/f_38-43', '/g_48-53', '/h_60-130']
     elif label_type == "gender":
         labels = ['/female', '/male']
     elif label_type == "age_gender":
-        labels = ['/a_female_0-2', '/b_female_4-6', '/c_female_8-12', '/d_female_15-20',
+        labels = ['/a_female_0-2', '/b_female_4-6', '/c_female_8-13', '/d_female_15-20',
                   '/e_female_25-32', '/f_female_38-43', '/g_female_48-53', '/h_female_60-130']
-        labels += ['/i_male_0-2', '/j_male_4-6', '/k_male_8-12', '/l_male_15-20',
+        labels += ['/i_male_0-2', '/j_male_4-6', '/k_male_8-13', '/l_male_15-20',
                    '/m_ale_25-32', '/n_male_38-43', '/o_male_48-53', '/p_male_60-130']
     else:
         print("Please enter either 'age', 'gender' or 'age_gender' as the third argument.")
