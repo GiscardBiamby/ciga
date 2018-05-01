@@ -42,12 +42,14 @@ def folderize(label_type):
             if not os.path.exists(p):
                 os.makedirs(p)
         val_dct = {k: v for k, v in zip(keys, temp_values)}
+
         temp_values = [[path + '/train' + val for path in fold_paths[:fold_idx] + fold_paths[fold_idx+1:]] for val in values]
         for t in temp_values:
             for p in t:
                 if not os.path.exists(p):
                     os.makedirs(p)
         train_dct = {k: v for k, v in zip(keys, temp_values)}
+
         for i in range(1, fold.shape[0]):
             path, img, id = fold[i, 0].decode('UTF-8'), fold[i, 1].decode('UTF-8'), fold[i, 2].decode('UTF-8')
             face_path = raw_path + '/faces/faces/' + path
@@ -72,14 +74,10 @@ def folderize(label_type):
                 if gender is None or len(gender) < 1:
                     continue
                 to_paths = [val_dct[gender+age]] + train_dct[gender+age]
-            to_paths = [p + '/' + id + '.' + img for p in to_paths]
             for from_path in from_paths:
+                filename = from_path.split('/')[-1]
                 for to_path in to_paths:
-                    if 'course' in from_path:
-                        to_path = to_path[:-3] + 'c' + '.jpg'
-                    else:
-                        to_path = to_path[:-3] + 'l' + '.jpg'
-                    shutil.copy(from_path, to_path)
+                    shutil.copy(from_path, to_path + '/' + filename)
         fold_idx += 1
 
 
