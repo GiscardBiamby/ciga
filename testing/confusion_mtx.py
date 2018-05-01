@@ -38,8 +38,11 @@ def confusion_mtx(model, test_generator, model_name, label_type, k=None):
         for i in range(k):
             predictions = model[i].predict_generator(test_generator[i], use_multiprocessing=True)
             label_dct = dict((v, k) for k, v in test_generator[i].class_indices.items())
-            print("Predictions: ", type(predictions), predictions)
+            # print("Predictions: ", type(predictions), predictions)
             # print("len(pred): ", len(predictions))
+            if type(predictions) == type(list()):
+                predictions = np.array(predictions)
+
             predictions = [label_dct[entry] for entry in predictions.argmax(axis=-1)]
             true_labels = [label_dct[entry] for entry in test_generator[i].classes]
             confusion_mat = np.array(confusion_matrix(true_labels, predictions, list(label_dct.values())))
