@@ -17,19 +17,19 @@ def folderize(label_type):
     raw_path = os.path.join(root, "raw")
 
     if label_type == "age":
-        values = ['/a_0-2', '/b_4-6', '/c_8-12', '/d_15-20', '/e_25-32', '/f_38-43', '/g_48-53', '/h_60-130']
-        keys = ['(0, 2)', '(4, 6)', '(8, 13)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
+        values = ['/a_0-2', '/b_4-6', '/c_8-13', '/d_15-20', '/e_25-32', '/f_38-43', '/g_48-53', '/h_60-130']
+        keys = ['(0, 2)', '(4, 6)', '(8, 12)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
     elif label_type == "gender":
         values = ['/female', '/male']
         keys = ['f', 'm']
     elif label_type == "age_gender":
-        values = ['/a_female_0-2', '/b_female_4-6', '/c_female_8-12', '/d_female_15-20',
+        values = ['/a_female_0-2', '/b_female_4-6', '/c_female_8-13', '/d_female_15-20',
                   '/e_female_25-32', '/f_female_38-43', '/g_female_48-53', '/h_female_60-130']
-        values += ['/i_male_0-2', '/j_male_4-6', '/k_male_8-12', '/l_male_15-20',
+        values += ['/i_male_0-2', '/j_male_4-6', '/k_male_8-13', '/l_male_15-20',
                    '/m_male_25-32', '/n_male_38-43', '/o_male_48-53', '/p_male_60-130']
-        keys = ['f(0, 2)', 'f(4, 6)', 'f(8, 13)', 'f(15, 20)',
+        keys = ['f(0, 2)', 'f(4, 6)', 'f(8, 12)', 'f(15, 20)',
                   'f(25, 32)', 'f(38, 43)', 'f(48, 53)', 'f(60, 100)']
-        keys += ['m(0, 2)', 'm(4, 6)', 'm(8, 13)', 'm(15, 20)',
+        keys += ['m(0, 2)', 'm(4, 6)', 'm(8, 12)', 'm(15, 20)',
                    'm(25, 32)', 'm(38, 43)', 'm(48, 53)', 'm(60, 100)']
     else:
         print("Please enter either 'age', 'gender' or 'age_gender' as the only argument.")
