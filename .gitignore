@@ -44,6 +44,7 @@ testing/confusion_matrices/
 datasets/raw/
 datasets/processed/
 datasets/processed_small/
+datasets/processed_*/
 datasets/equal_data/
 *.backup
 training/logs/
