@@ -25,7 +25,7 @@ def folderize(dataset, k, label_type):
         labels = ['/a_female_0-2', '/b_female_4-6', '/c_female_8-13', '/d_female_15-20',
                   '/e_female_25-32', '/f_female_38-43', '/g_female_48-53', '/h_female_60-130']
         labels += ['/i_male_0-2', '/j_male_4-6', '/k_male_8-13', '/l_male_15-20',
-                   '/m_ale_25-32', '/n_male_38-43', '/o_male_48-53', '/p_male_60-130']
+                   '/m_male_25-32', '/n_male_38-43', '/o_male_48-53', '/p_male_60-130']
     else:
         print("Please enter either 'age', 'gender' or 'age_gender' as the third argument.")
         return
