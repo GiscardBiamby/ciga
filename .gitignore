@@ -43,6 +43,7 @@ Thumbs.db
 testing/confusion_matrices/
 datasets/raw/
 datasets/processed/
+datasets/processed_small/
 datasets/equal_data/
 *.backup
 training/logs/
