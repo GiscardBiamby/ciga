@@ -76,6 +76,7 @@ def load_all_folds_info(raw_path, age_groups):
     adience_img_count = adience_images.shape[0]
     return adience_images, adience_img_count, col_names
 
+
 def add_img_counts(adience_images):
     counts = []
     for img in adience_images:
@@ -88,11 +89,14 @@ def add_img_counts(adience_images):
 def get_userid(img):
     return img[0]
 
+
 def get_filename(img):
     return img[1]
 
+
 def get_face_id(img):
     return img[2]
+
 
 def get_age(img):
     age = img[3]
@@ -101,9 +105,11 @@ def get_age(img):
         return age.replace("8-12", "8-13")
     return None
 
+
 def get_gender(img):
     gender = img[4]
     return gender if len(gender) > 0 else None
+
 
 def get_raw_paths(img):
     img_path = img[5]
@@ -111,8 +117,10 @@ def get_raw_paths(img):
     img_paths = glob.glob("{}/*.{}.*{}".format(img_path, get_face_id(img), get_filename(img)))
     return img_paths
 
+
 def get_fold_num(img):
     return img[6]
+
 
 def get_img_count(img):
     return img[7]
@@ -170,6 +178,7 @@ def sample_adience_images(adience_images, num_samples, age_group):
     print("#face_id's sampled: {}".format(len(np.unique(sampled_face_ids))))
     return sampled_images
 
+
 def augment_img(datagen, target_dir, img, counts, train_or_valid):
     """
 
@@ -206,11 +215,11 @@ def augment_img(datagen, target_dir, img, counts, train_or_valid):
     if target_dir not in counts:
         counts[target_dir] = 0
 
-    # for augmented in datagen.flow(img, batch_size=1, save_to_dir=target_dir, save_prefix='aug', save_format='jpeg'):
-    #     if aug_count >= NUM_AUG:
-    #         break
-    #     aug_count += 1
-    #     counts[target_dir] += 1
+    for augmented in datagen.flow(img, batch_size=1, save_to_dir=target_dir, save_prefix='aug', save_format='jpeg'):
+        if aug_count >= NUM_AUG:
+            break
+        aug_count += 1
+        counts[target_dir] += 1
 
 
 def augment_and_move(
@@ -270,7 +279,7 @@ def augment_and_move(
     print("Deleting {} imgs from adience raw".format(len(processed)))
     for img in processed:
         if os.path.exists(img) and img.endswith(".jpg"):
-            # os.remove(img)
+            os.remove(img)
             print("Deleting ", img)
             pass
         else:
@@ -279,9 +288,26 @@ def augment_and_move(
     return num_deleted
 
 
+def to_df(arr, cols):
+    data = {col_name:arr[:,i] for i,col_name in enumerate(cols)}
+    df = pd.DataFrame(data)
+    return df
 
 
-def main_old():
+def explore_data():
+    root = os.path.dirname(os.path.abspath(__file__))
+    raw_path = os.path.join(root, "raw")
+    age_groups = {"0-2":0, "4-6":0, "8-13":0, "15-20":0}
+    adience_images, adience_img_count, col_names = load_all_folds_info(raw_path, age_groups)
+    df = to_df(adience_images, col_names)
+
+    df = df[df['age'].isin(
+        ["(0, 2)", "(4, 6)", "(8, 12)", "(15, 20)", "(25, 32)", "(38, 43)", "(48, 53)", "(60, 100)"]
+    )]
+    print(df.sort_values(by=["age", "fold_num", "face_id"]).groupby(["age", "fold_num", "face_id"]).img_count.sum())
+
+
+def main():
     np.random.seed(57)
     datagen = ImageDataGenerator(
         rotation_range=15.0,
@@ -340,30 +366,11 @@ def main_old():
     print("Done! ")
 
 
-def to_df(arr, cols):
-    data = {col_name:arr[:,i] for i,col_name in enumerate(cols)}
-    df = pd.DataFrame(data)
-    return df
-
-def main():
-    root = os.path.dirname(os.path.abspath(__file__))
-    raw_path = os.path.join(root, "raw")
-    age_groups = {"0-2":0, "4-6":0, "8-13":0, "15-20":0}
-    adience_images, adience_img_count, col_names = load_all_folds_info(raw_path, age_groups)
-    df = to_df(adience_images, col_names)
-
-    df = df[df['age'].isin(
-        ["(0, 2)", "(4, 6)", "(8, 12)", "(15, 20)", "(25, 32)", "(38, 43)", "(48, 53)", "(60, 100)"]
-    )]
-    print(df.sort_values(by=["age", "fold_num", "face_id"]).groupby(["age", "fold_num", "face_id"]).img_count.sum())
-
-
 
 
 
 ## =====================================================================================================================
-# main()
-main_old()
 
-# wiki before: 19449
-# wiki after: 20131
+if __name__ == '__main__':
+    main()
+    # explore_data()
