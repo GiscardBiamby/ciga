@@ -12,7 +12,7 @@ import keras
 from keras import optimizers
 from keras import backend as K
 from testing.confusion_mtx import *
-
+import copy
 
 def k_fold_cross_val(dataset,
                      k,
@@ -29,7 +29,7 @@ def k_fold_cross_val(dataset,
     print('+====================================================================+')
     num_channels = 1 if grayscale else 3
     img_shape = (img_size, img_size, num_channels)
-    fold_paths = "../datasets/processed_small/" + dataset + "/" + label_type + "_fold_"
+    fold_paths = "../datasets/processed/" + dataset + "/" + label_type + "_fold_"
     fold_paths = [fold_paths + str(i) + "/" for i in range(1, k+1)]
 
     # Build k data generators:
@@ -69,8 +69,13 @@ def k_fold_cross_val(dataset,
     results = np.zeros((k,4))
 
     # Train k models:
-    trainers = [cigaTraining.BasicTrainer(model=models[i], config=trainer_config, enable_sms=False) for i in range(k)]
+    trainers = []
     for i in range(k):
+        trainer_config_i = copy.deepcopy(trainer_config)
+        trainer_config_i["fold_num"] = i
+        trainer_config_i["kfolds_k"] = k
+        trainers.append(cigaTraining.BasicTrainer(model=models[i], config=trainer_config_i,
+                                                 enable_sms=False))
         print("Training fold {}/{}...".format(i+1, k))
         try:
             trainers[i].train(
@@ -124,74 +129,6 @@ def k_fold_cross_val(dataset,
     confusion_mtx(models, validation_generators, model_name=model_type, label_type=label_type, k=k)
     print()
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='File to complete k folds cross validation on input dataset (potentially with pretrained weights).')
-    parser.add_argument('dataset', help='Dataset to use, either "adience", "imdb" or "wiki"')
-    parser.add_argument('k', type=int, help='The number of folds to use, typically k=5 or k=7')
-    parser.add_argument('label_type', help="The label type to be used, either: 'age', 'age_gender' or 'gender'")
-    parser.add_argument('model_type', help="The model type to be used, either: 'vgg-16', 'sameres' or 'resnet'")
-    parser.add_argument('-w', '--weights', help="File path to pretrained weights.")
-    parser.add_argument('-p', '--pre_trained_model', help="File path to a pretrained model.")
-    args = parser.parse_args()
-
-
-    grayscale = True
-    img_size = 224
-    batch_size = 128
-    epochs = 2
-
-    # (IF MODEL == RESNET || MODEL == ANDREYNET) && (not using pre-trained model):
-    # Change values in this section for ResNet or AndreyNet architecture variable:
-    architecture, layers, stages, dense_size, dense = {}, 4, 5, 512, 1
-    architecture['stages'] = [[layers, 64 * (2 ** i)] for i in range(stages)]
-    architecture['dense'] = [dense_size for _ in range(dense)]
-
-    # resnet_age:
-    trainer_config = {
-        "reduce_lr_params": {
-            "factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True
-        }
-        , "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3, "layers": 3
-        , "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True
-        , "early_stop_patience": 5
-    }
-
-    if args.pre_trained_model:
-        k_fold_cross_val(args.dataset,
-                         args.k,
-                         args.label_type,
-                         args.model_type,
-                         trainer_config,
-                         epochs=epochs,
-                         img_size=img_size,
-                         batch_size=batch_size,
-                         grayscale=grayscale,
-                         architecture=architecture,
-                         model=args.pre_trained_model)
-    elif args.weights:
-        k_fold_cross_val(args.dataset,
-                         args.k,
-                         args.label_type,
-                         args.model_type,
-                         trainer_config,
-                         epochs=epochs,
-                         img_size=img_size,
-                         batch_size=batch_size,
-                         grayscale=grayscale,
-                         weights=args.weights,
-                         architecture=architecture)
-    else:
-        k_fold_cross_val(args.dataset,
-                         args.k,
-                         args.label_type,
-                         args.model_type,
-                         trainer_config,
-                         epochs=epochs,
-                         img_size=img_size,
-                         batch_size=batch_size,
-                         grayscale=grayscale,
-                         architecture=architecture)
 
 # Can remove this later, only adding it so i can run this script from my IDE
 def main_2():
@@ -239,7 +176,6 @@ def main_2():
                 "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
                "dense_size": 128, "img_size": 224, "grayscale": True
            })
-
         , ("kfold_vgg16_age", "age", "vgg-16"
            , "./saved_models/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01.h5"
            , {
@@ -266,7 +202,7 @@ def main_2():
     dataset = "adience"
     grayscale = True
     img_size = 224
-    epochs = 2
+    epochs = 30
     K = 5
 
     for model_name, label_type, model_type, weights_path, trainer_config in model_configs:
