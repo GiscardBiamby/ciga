@@ -17,6 +17,10 @@ import pandas as pd
 ###############################################################################
 
 
+# If true, script won't modify/copy/create/move any files, just output what it *would* do if TEST_MODE were disabled:
+TEST_MODE = False
+
+
 def load_all_folds_info(raw_path, age_groups):
     """
     Return 2d numpy array of all columns 1-5 from all the .txt files of the adience dataset. ALso appends one new
@@ -57,21 +61,20 @@ def load_all_folds_info(raw_path, age_groups):
         folds.append(fold)
     adience_images = np.vstack(folds)
     # print("adience_images.shape: ", adience_images.shape)
-    adience_images = add_img_counts(adience_images)
 
-    # Filter some data:
-    before = adience_images.shape[0]
-    keep = [False]*adience_images.shape[0]
+    # Scrub some data:
     for idx, img in enumerate(adience_images):
         age = get_age(img)
         if age is not None and age in age_groups.keys():
-            keep[idx] = True
+            # keep[idx] = True
             adience_images[idx,3] = img[3].replace("(8, 12)", "(8, 13)")
-    adience_images = adience_images[keep]
-    after = adience_images.shape[0]
-    # print("Removed {} images on age filtering".format(after-before))
 
-    col_names = ["user_id", "filename", "face_id", "age", "gender", "base_path", "fold_num", "img_count"]
+    col_names = ["user_id", "filename", "face_id", "age", "gender", "base_path", "fold_num"]
+
+    # Only need this during data exploration, it makes the script slower so disable it if not needed:
+    if False:
+        adience_images = add_img_counts(adience_images)
+        col_names += "img_count"
 
     adience_img_count = adience_images.shape[0]
     return adience_images, adience_img_count, col_names
@@ -126,7 +129,15 @@ def get_img_count(img):
     return img[7]
 
 
-def sample_adience_images(adience_images, num_samples, age_group):
+def get_all_paths_for_face_id(face_id):
+    img_paths = set()
+    img_paths.update(set(glob.glob("./raw/faces/faces/*/*.{}.*.jpg".format(face_id))))
+    img_paths.update(set(glob.glob("./raw/aligned/aligned/*/*.{}.*.jpg".format(face_id))))
+    # print("img_paths: ", list(img_paths))
+    return list(img_paths)
+
+
+def sample_adience_images(adience_images, col_names, num_samples, age_group, alredy_sampled):
     """
     Picks which images to move from adience to wiki/imdb. Can't guarantee exactly num_samples,
     the guarantee is only that at least num_samples images will be pulled from adience for the
@@ -138,11 +149,12 @@ def sample_adience_images(adience_images, num_samples, age_group):
     :param adience_images: 2d np array of img info from adience .txt files
     :param adience_indexes: list of indexes into adience_images that haven't been sampled yet
     :param num_samples: # samples to take
-    :return: list of sampled images. Each item in list is a dictionary. key/val map:
-                ["paths"]: list of paths for sampled image
-                ["img"]: row from adience_images np array corresponding to the sampled image
+    :return: dictionary of sampled faces. key/val map:
+                key: (string) face_id
+                val: tuple, length 3, of info for the face_id: ((str) age, (str) gender, (list) image_paths)
     """
 
+    ignored_faces = get_ignored_faces(adience_images, col_names) # don't sample these face_ids
     age_low, age_hi = age_group.split("-")
     age_low, age_hi = int(age_low), int(age_hi)
     age_bucket = "({}, {})".format(age_low, age_hi)
@@ -151,37 +163,33 @@ def sample_adience_images(adience_images, num_samples, age_group):
 
     # All face_id's for the age_group:
     face_ids = np.unique(adience_agegroup[:,2])
+    face_ids = [face_id for face_id in face_ids if face_id not in ignored_faces]
+    face_ids = [face_id for face_id in face_ids if face_id not in alredy_sampled]
     np.random.shuffle(face_ids)
     # print("face_ids: ", face_ids)
     # print("face_ids.shape: ", face_ids.shape)
 
     # Gather paths of images we will augment and move:
-    sampled_images = []  # images we will augment and move
-    sampled_count = 0
-    sampled_face_ids = []
+    sampled_img_count = 0
+    sampled_faces = {}
 
     for face_id in face_ids:
-        # Grab all imgs for curr. face_id:
-        imgs = adience_agegroup[adience_agegroup[:,2]==face_id]
-        print("face_id: {}, imgs: {}".format(face_id, imgs.shape))
-
-        if sampled_count >= num_samples:
+        if sampled_img_count >= num_samples:
             break
-        sampled_face_ids.append(face_id)
-        for img in imgs:
-            paths = get_raw_paths(img)
-            sampled_images.append({"paths": paths, "img": img })
-            sampled_count += len(paths)
+        img = adience_agegroup[adience_agegroup[:,2]==face_id][0]
+        paths = get_all_paths_for_face_id(face_id)
+        print("sampled_img_count: {}, face_id: {}, num_imgs: {}".format(sampled_img_count, face_id, len(paths)))
+        sampled_faces[face_id] =  (get_age(img), get_gender(img), paths)
+        sampled_img_count += len(paths)
 
-    print("age_group:'{}', #sampled_imgs: {}, #sampled_images: {}".format(age_group, sampled_count,
-                                                                           len(sampled_images)))
-    print("#face_id's sampled: {}".format(len(np.unique(sampled_face_ids))))
-    return sampled_images
+    print("age_group:'{}', #sampled_img_count: {}".format(age_group, sampled_img_count))
+    print("#face_id's sampled: {}".format(len(sampled_faces.keys())))
+    return sampled_faces
 
 
-def augment_img(datagen, target_dir, img, counts, train_or_valid):
+def augment_img(datagen, target_dir, img, counts, train_or_valid, curr_num, total):
     """
-
+    Uses keras ImageDataGenerator to create 15 augmented/transformed versions of the given image.
     :param datagen:
     :param target_dir:
     :param x: image to augment
@@ -210,21 +218,23 @@ def augment_img(datagen, target_dir, img, counts, train_or_valid):
     # print("train_dir: ", train_dir)
     # print("val_dir: ", val_dir)
     target_dir = train_dir if train_or_valid == "train" else val_dir
-    # print("target_dir: ", target_dir)
+    print("Adding augmented images ({}/{}) to path: {}".format(curr_num, total, target_dir))
 
     if target_dir not in counts:
         counts[target_dir] = 0
 
-    for augmented in datagen.flow(img, batch_size=1, save_to_dir=target_dir, save_prefix='aug', save_format='jpeg'):
-        if aug_count >= NUM_AUG:
-            break
-        aug_count += 1
-        counts[target_dir] += 1
+    if not TEST_MODE:
+        for augmented in datagen.flow(img, batch_size=1, save_to_dir=target_dir, save_prefix='aug', save_format='jpeg'):
+            if aug_count >= NUM_AUG:
+                break
+            aug_count += 1
+            counts[target_dir] += 1
 
 
 def augment_and_move(
     sampled_images, datagen, counts
-    , male_dir, female_dir, age_dir, age_gender_dir
+    , gender_dir, age_dir, age_gender_dir
+    , train_or_valid
 ):
     """
     :param adience_images: 2d np array of image data from the adience .txt files
@@ -235,57 +245,89 @@ def augment_and_move(
     :return:
     """
 
-    VALID_RATIO = 10
-    num_samples = sum([len(s["paths"]) for s in sampled_images])
-    valid_start_index =  num_samples//VALID_RATIO
-    print("num_samples, valid_ratio: ", num_samples, num_samples//VALID_RATIO)
-    num_train, num_valid = 0, 0
+    # Map age/gender fields from .txt files to folder names based on ground truth labels:
+    age_map = {
+        "0-2": "a_0-2", "4-6": "b_4-6", "8-13": "c_8-13", "15-20": "d_15-20", "25-32": "e_25-32",
+        "38-43": "f_38-43", "48-53": "g_48-53", "60-100": "h_60-130"
+    }
+    gender_map = {
+        "m": "male", "f": "female"
+    }
+    age_gender_map = {
+        ("0-2", "f"): "a_female_0-2"
+        , ("4-6", "f"): "b_female_4-6"
+        , ("8-13", "f"): "c_female_8-13"
+        , ("15-20", "f"): "d_female_15-20"
+        , ("25-32", "f"): "e_female_25-32"
+        , ("38-43", "f"): "f_female_38-43"
+        , ("48-53", "f"): "g_female_48-53"
+        , ("60-100", "f"): "h_female_60-130"
+        , ("0-2", "m"): "i_male_0-2"
+        , ("4-6", "m"): "j_male_4-6"
+        , ("8-13", "m"): "k_male_8-13"
+        , ("15-20", "m"): "l_male_15-20"
+        , ("25-32", "m"): "m_male_25-32"
+        , ("38-43", "m"): "n_male_38-43"
+        , ("48-53", "m"): "o_male_48-53"
+        , ("60-100", "m"): "p_male_60-130"
+    }
+
     num_deleted = 0
     processed = []
-    i = 0
-    for sample in sampled_images:
-        img_paths, img_data = sample["paths"], sample["img"]
+    i, total = 1, sum([len(v[2]) for v in sampled_images.values()])
+    for face_id, vals in sampled_images.items():
+        age, gender, img_paths = vals
         for img_path in img_paths:
             # print("augmenting img: ", img_path)
             img = load_img(img_path)
             x = img_to_array(img)
             x = x.reshape((1,) + x.shape)
-            gender, age = get_gender(img_data), get_age(img_data)
+            age_gender = (age,gender)
 
-            # Is this img in the train or val split?
-            if i < valid_start_index:
-                train_or_valid = "valid"
-                num_valid += 1
-            else:
-                train_or_valid = "train"
-                num_train += 1
-            # print("train_or_valid: ", train_or_valid)
+            if gender in gender_map:
+                augment_img(
+                    datagen
+                    , os.path.join(gender_dir, gender_map[gender])
+                    , x, counts, train_or_valid, i, total
+                )
+            if age in age_map:
+                augment_img(
+                    datagen
+                    , os.path.join(age_dir, age_map[age])
+                    , x, counts, train_or_valid, i, total
+                )
+            if age_gender in age_gender_map:
+                augment_img(
+                    datagen
+                    , os.path.join(age_gender_dir, age_gender_map[age_gender])
+                    , x, counts, train_or_valid, i, total
+                )
 
-            if gender=="m":
-                augment_img(datagen, male_dir, x, counts, train_or_valid)
-                augment_img(datagen, age_dir + age, x, counts, train_or_valid)
-                augment_img(datagen, age_gender_dir + 'male_' + age, x, counts, train_or_valid)
-            elif gender=="f":
-                augment_img(datagen, female_dir, x, counts, train_or_valid)
-                augment_img(datagen, age_dir + age, x, counts, train_or_valid)
-                augment_img(datagen, age_gender_dir + 'female_' + age, x, counts, train_or_valid)
-            else:
-                augment_img(datagen, age_dir + age, x, counts, train_or_valid)
             processed.append(img_path)
             num_deleted += 1
             i += 1
 
-    print("num_train, num_valid: ", num_train, num_valid)
     print("Deleting {} imgs from adience raw".format(len(processed)))
     for img in processed:
         if os.path.exists(img) and img.endswith(".jpg"):
-            os.remove(img)
-            print("Deleting ", img)
+            if not TEST_MODE:
+                os.remove(img)
+            print("Deleting (TEST_MODE={}): {}".format(TEST_MODE, img))
             pass
         else:
             print("Not removing: ", img)
 
     return num_deleted
+
+
+def get_ignored_faces(adience_images, col_names):
+    # Ignore faces that are in 2 folds, seems to happen because we combined faces/faces/ and aligned/aligned/
+    df = to_df(adience_images, col_names)
+    by_face_fold = df.groupby(["face_id"])["fold_num"].nunique().reset_index(name="freq")
+    ignored_face_ids = by_face_fold[by_face_fold.freq==2].face_id.unique()
+    # print("ignored: ")
+    # print(df[df.face_id.isin(ignored_face_ids)])
+    return set(ignored_face_ids)
 
 
 def to_df(arr, cols):
@@ -301,10 +343,51 @@ def explore_data():
     adience_images, adience_img_count, col_names = load_all_folds_info(raw_path, age_groups)
     df = to_df(adience_images, col_names)
 
-    df = df[df['age'].isin(
-        ["(0, 2)", "(4, 6)", "(8, 12)", "(15, 20)", "(25, 32)", "(38, 43)", "(48, 53)", "(60, 100)"]
-    )]
-    print(df.sort_values(by=["age", "fold_num", "face_id"]).groupby(["age", "fold_num", "face_id"]).img_count.sum())
+    # df = df[df['age'].isin(
+    #     ["(0, 2)", "(4, 6)", "(8, 12)", "(15, 20)", "(25, 32)", "(38, 43)", "(48, 53)", "(60, 100)"]
+    # )]
+    # print(df.sort_values(by=["age", "fold_num", "face_id"]).groupby(["age", "fold_num", "face_id"]).img_count.sum())
+
+    # See if any face_id's appear in more than one fold:
+    print("grouped by: (face_id, fold_num), sorted by: (group size desc). ")
+    print(
+        df.sort_values(by=["face_id", "fold_num"]).groupby(["face_id", "fold_num"]).size().reset_index(
+        name="Freq").sort_values(by='Freq',ascending=False)
+    )
+    # Results are good, no user shows up in more than one fold!
+
+    # See if any face_id's have more than one fold (should be false):
+    print("grouped by: (face_id, fold), sorted by: (group size desc). ")
+    print(
+        df.groupby(["face_id"])["fold_num"].nunique().reset_index(
+        name="Freq").sort_values(by='Freq', ascending=False)
+    )
+
+    # See if any face_id's have more than one age (should be false):
+    print("grouped by: (face_id, age), sorted by: (group size desc). ")
+    print(
+        df.groupby(["face_id"])["age"].nunique().reset_index(
+        name="Freq").sort_values(by='Freq', ascending=False)
+    )
+
+    # See if any face_id's have more than one gender (should be false):
+    print("grouped by: (face_id, gender), sorted by: (group size desc). ")
+    print(
+        df.groupby(["face_id"])["gender"].nunique().reset_index(
+        name="Freq").sort_values(by='Freq', ascending=False)
+    )
+
+    # See if any face_id's have more than one file (should be true, just a sanity check):
+    print("grouped by: (face_id, filename), sorted by: (group size desc). ")
+    print(
+        df.groupby(["face_id"])["filename"].nunique().reset_index(
+        name="Freq").sort_values(by='Freq', ascending=False)
+    )
+
+    print(df[df["face_id"]=="436"])
+
+    by_face_fold = df.groupby(["face_id"])["fold_num"].nunique().reset_index(name="freq")
+    print(by_face_fold[by_face_fold.freq==2].face_id.unique())
 
 
 def main():
@@ -321,44 +404,45 @@ def main():
     root = os.path.dirname(os.path.abspath(__file__))
     raw_path = os.path.join(root, "raw")
     target_path = os.path.join(root, "processed/wiki")
+    gender_path, age_path, age_gender_path = target_path+'/gender/', target_path+'/age/', target_path+'/age_gender/'
+    print("target_path: ", target_path)
 
-    gender, age, age_gender = target_path + '/gender', target_path + '/age', target_path + '/age_gender'
-    paths = [gender, age, age_gender] + [gender + '/female', gender + '/male']
-    paths += [age + p for p in ['/a_0-2', '/b_4-6', '/c_8-13', '/d_15-20', '/e_25-32', '/f_38-43', '/g_48-53',
-                                '/h_60-130']]
-    paths += [age_gender + p for p in ['/i_male_0-2', '/j_male_4-6', '/k_male_8-13', '/l_male_15-20', '/m_male_25-32',
-                                       '/n_male_38-43', '/o_male_48-53', '/p_male_60-130']]
-    paths += [age_gender + p for p in ['/a_female_0-2', '/b_female_4-6', '/c_female_8-13', '/d_female_15-20',
-                                       '/e_female_25-32', '/f_female_38-43', '/g_female_48-53', '/h_female_60-130']]
-
-    male, female, age_path = target_path + '/gender/male', target_path + '/gender/female', target_path + '/age/'
-    print("processed_path: ", target_path)
-    print("male, female, age_path : ", male, female, age_path )
-
+    # Which groups to augment:
     age_groups = {"0-2":0, "4-6":0, "8-13":0, "15-20":0}
-    # how many samples to move from adience, for each age_group:
-    NUM_SAMPLES = 200
 
-    # Load all the adience image info into a single numpy matrix:
+    # How many samples to move from adience (for each age_group):
+    NUM_SAMPLES_TRAIN = 180
+    NUM_SAMPLES_VALID = 20
+
+    # Load all the adience image info from ./datasets/raw/*.txt files into a single numpy matrix:
     adience_images, adience_img_count, col_names = load_all_folds_info(raw_path, age_groups)
-
 
     # For each age_group, sample images from adience, and move to wiki:
     counts = {}
+    already_sampled = {}
     num_deleted = 0
     for age_group, age_group_count in age_groups.items():
         print("Sampling from adience for age_group: ", age_group)
-        sampled_images = sample_adience_images(adience_images, NUM_SAMPLES, age_group)
-        num_deleted_tmp = augment_and_move(
-            sampled_images
+        samples_train = sample_adience_images(adience_images, col_names, NUM_SAMPLES_TRAIN, age_group, already_sampled)
+        num_deleted += augment_and_move(
+            samples_train
             , datagen
             , counts
-            , male, female, age_path, age_gender + "/"
+            , gender_path, age_path, age_gender_path
+            , "train"
         )
-        num_deleted += num_deleted_tmp
+        samples_valid = sample_adience_images(adience_images, col_names, NUM_SAMPLES_VALID, age_group, already_sampled)
+        num_deleted += augment_and_move(
+            samples_valid
+            , datagen
+            , counts
+            , gender_path, age_path, age_gender_path
+            , "valid"
+        )
 
-        print("Finished augment&move for age_group:'{}'. Deleted from adience: {}".format(age_group, num_deleted_tmp))
-        print("Num images sampled: ", sum([len(s["paths"]) for s in sampled_images]))
+        print("Finished augment&move for age_group:'{}'. Deleted from adience: {}".format(age_group, num_deleted))
+        print("Num train images sampled: ", sum([len(v[2]) for k,v in samples_train.items()]))
+        print("Num train images sampled: ", sum([len(v[2]) for k,v in samples_valid.items()]))
         print()
 
     print("augmented counts: ", counts)
@@ -366,11 +450,7 @@ def main():
     print("Done! ")
 
 
-
-
-
-## =====================================================================================================================
-
 if __name__ == '__main__':
+    print("Test mode enabled? ", TEST_MODE)
     main()
     # explore_data()
