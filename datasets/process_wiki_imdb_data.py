@@ -122,6 +122,12 @@ def make_age_dataset(raw_images_path, dataset_name, data, age_partitions):
 		print("Creating age partition: ", age_partition)
 		lower, upper = age_partition
 		class_name = str(lower) + '-' + str(upper)
+		age_group_map = {
+			"0-2": "a_0-2", "4-6": "b_4-6", "8-13": "c_8-13", "15-20": "d_15-20", "25-32": "e_25-32",
+			"38-43": "f_38-43", "48-53": "g_48-53", "60-130": "h_60-130"
+		}
+		class_name = age_group_map[class_name]
+		print("class: ", class_name)
 
 		# Train:
 		if not os.path.exists(train_directory + class_name):
@@ -145,6 +151,24 @@ def make_age_gender_dataset(raw_images_path, dataset_name, data, age_partitions)
 	valid_directory = './processed/{}/age_gender/valid/'.format(dataset_name)
 
 	genders = ['female', 'male']
+	age_gender_map = {
+		("0-2", "f"): "a_female_0-2"
+		, ("4-6", "f"): "b_female_4-6"
+		, ("8-13", "f"): "c_female_8-13"
+		, ("15-20", "f"): "d_female_15-20"
+		, ("25-32", "f"): "e_female_25-32"
+		, ("38-43", "f"): "f_female_38-43"
+		, ("48-53", "f"): "g_female_48-53"
+		, ("60-130", "f"): "h_female_60-130"
+		, ("0-2", "m"): "i_male_0-2"
+		, ("4-6", "m"): "j_male_4-6"
+		, ("8-13", "m"): "k_male_8-13"
+		, ("15-20", "m"): "l_male_15-20"
+		, ("25-32", "m"): "m_male_25-32"
+		, ("38-43", "m"): "n_male_38-43"
+		, ("48-53", "m"): "o_male_48-53"
+		, ("60-130", "m"): "p_male_60-130"
+	}
 
 	for i in range(len(genders)):
 		gender = genders[i]
@@ -152,6 +176,8 @@ def make_age_gender_dataset(raw_images_path, dataset_name, data, age_partitions)
 		for age_partition in age_partitions:
 			lower, upper = age_partition
 			class_name = gender + '_' +str(lower) + '-' + str(upper)
+			class_name = age_gender_map[("{}-{}".format(str(lower), str(upper)), gender[0])]
+			print("class: ", class_name)
 
 			# Train:
 			if not os.path.exists(train_directory + class_name):
@@ -175,11 +201,11 @@ def make_age_gender_dataset(raw_images_path, dataset_name, data, age_partitions)
 def create_datasets(metadata_path, raw_images_path, metadata_dict_key, age=True, gender=True, gender_age=True):
 	proccesed_data = proccess_mat(metadata_path, metadata_dict_key)
 	age_partitions = [[0, 2], [4, 6], [8, 13], [15, 20], [25, 32], [38, 43], [48, 53], [60, 130]]
-	if age:
+	if gender:
 		make_gender_dataset(raw_images_path, metadata_dict_key, proccesed_data)
 		print("Done creating gender dataset")
 		print('=================================================================')
-	if gender:
+	if age:
 		make_age_dataset(raw_images_path, metadata_dict_key, proccesed_data, age_partitions)
 		print("Done creating age dataset")
 		print('=================================================================')
