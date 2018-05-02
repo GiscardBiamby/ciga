@@ -124,46 +124,44 @@ def generateFolds(adience_images, processed_path, fold_num):
         # print("fold_num: {}, imgfold: {}, split: {}".format(type(fold_num), type(img_fold), split))
 
         for img_path in img_paths:
+            # print("from: ", img_path)
             # # Gender:
             if gender is not None and gender in gender_map:
                 to_dir = os.path.join(gender_base_path, gender_map[gender]).replace("train_or_val", split)
                 to_path = os.path.join(to_dir, os.path.basename(img_path))
-                print("todir: '{}'".format(to_dir))
                 if not os.path.exists(to_dir):
                     os.makedirs(os.path.dirname(to_dir))
-                # shutil.copy(from_path, to_path)
-                print("from: ", img_path)
-                print("to: ", to_path)
+                if not os.path.exists(to_path):
+                    shutil.copy(img_path, to_path)
+                # print("to: ", to_path)
             else:
-                print("Not copying img b/c of unwanted or invalid gender: ", gender)
+                # print("Not copying img b/c of unwanted or invalid gender: ", gender)
                 pass
 
             # # Age:
             if age is not None and age in age_group_map:
                 to_dir = os.path.join(age_base_path, age_group_map[age]).replace("train_or_val", split)
                 to_path = os.path.join(to_dir, os.path.basename(img_path))
-                print("todir: '{}'".format(to_dir))
                 if not os.path.exists(to_dir):
                     os.makedirs(os.path.dirname(to_dir))
-                # shutil.copy(from_path, to_path)
-                print("from: ", img_path)
-                print("to: ", to_path)
+                if not os.path.exists(to_path):
+                    shutil.copy(img_path, to_path)
+                # print("to: ", to_path)
             else:
-                print("Not copying img b/c of unwanted or invalid age: ", age)
+                # print("Not copying img b/c of unwanted or invalid age: ", age)
                 pass
 
             # Age-Gender:
             if (gender is not None and gender in gender_map) and (age is not None and age in age_group_map):
                 to_dir = os.path.join(age_gender_base_path, age_gender_map[(age,gender)]).replace("train_or_val", split)
                 to_path = os.path.join(to_dir, os.path.basename(img_path))
-                print("todir: '{}'".format(to_dir))
                 if not os.path.exists(to_dir):
                     os.makedirs(os.path.dirname(to_dir))
-                # shutil.copy(from_path, to_path)
-                print("from: ", img_path)
-                print("to: ", to_path)
+                if not os.path.exists(to_path):
+                    shutil.copy(img_path, to_path)
+                # print("to: ", to_path)
             else:
-                print("Not copying img b/c of unwanted or invalid gender: ", gender)
+                # print("Not copying img b/c of unwanted or invalid age_gender: ", (age,gender))
                 pass
 
 def main():
@@ -171,7 +169,10 @@ def main():
     processed_path = "./processed_test/adience/"
     adience_images, adience_img_count = load_all_folds_info(raw_path)
     print(adience_images)
-    generateFolds(adience_images, processed_path, 4)
+    K = 5
+    for i in range(K):
+        print("Generating fold {} of {}".format(i+1, K))
+        generateFolds(adience_images, processed_path, i)
 
 
 main()
