@@ -15,7 +15,7 @@ import collections, re, csv
 import tensorflow as tf
 from keras import backend as K
 import gc
-import pickle
+import pickle, copy
 
 
 # Maybe this should go into it's own file and/or class
@@ -46,6 +46,7 @@ def generatorsBuilder(dataset_path, img_dims=(50, 50), batch_size=32, grayscale=
                                                         batch_size=batch_size,
                                                         class_mode='categorical')
     return train_generator, valid_generator
+
 
 def configHasAlreadyRun(trainer_config, model_name_pattern="ResNet val_acc"):
     """
@@ -92,6 +93,21 @@ def off_by_one_categorical_accuracy(y_true, y_pred):
     mask = tf.logical_or(mask, comparison3)
     return K.cast(mask, K.floatx())
 
+
+# Per-batch metrics (more fine-grained than per-epoch that keras tracks by default):
+class LossHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        # batch_logs is a list of dictionaries:
+        self.batch_logs = []
+
+    def on_batch_end(self, batch, logs={}):
+        # Just record everything passed in:
+        self.batch_logs.append(logs)
+
+    def get_losses(self):
+        return [batch["loss"] for batch in self.batch_logs]
+
+
 class BasicTrainer(object):
 
     def __init__(self, model, config, enable_checkpoints=False, enable_sms=False):
@@ -117,9 +133,14 @@ class BasicTrainer(object):
         # to only append this callback if the reduce_lr_params key exists in self.config:
         self.config["reduce_lr_params"]["verbose"] = True
         self.callbacks.append(ReduceLROnPlateau(**(self.config["reduce_lr_params"])))
+
+        # Early stopping:
         early_stop_patience = self.config["early_stop_patience"] \
             if "early_stop_patience" in self.config else 5
         self.callbacks.append(EarlyStopping(monitor='val_loss', min_delta=0, patience=early_stop_patience, verbose=1, mode='auto'))
+
+        self.loss_history = LossHistory()
+        self.callbacks.append(self.loss_history)
 
         # Add if statement, or just make the caller use self.addCallback, since not everyoe will use this:
         if self.enable_sms:
@@ -234,7 +255,15 @@ class BasicTrainer(object):
             pickle.dump(self.model.history.history, fp)
         # Ex of loading training hist:
         #   import pickle
-        #   hist = pickle.load(open("./models/saved_models/.../traininghist.pickle", "rb"))
+        #   hist = pickle.load(open("./models/saved_models/your_model_name/traininghist.pickle", "rb"))
+
+        # Save LostHistory:
+        with open(os.path.join(savedModelDir, 'batch_loss_history.pickle'), 'wb') as fp:
+            pickle.dump(self.loss_history.batch_logs, fp)
+        # Ex of loading per-batch hist:
+        #   import pickle
+        #   batch_hist = pickle.load(open("./models/saved_models/your_model_name/batch_loss_history.pickle", "rb"))
+
 
     def saveTrainingPlots(self, savedModelDir):
         """
@@ -273,6 +302,13 @@ class BasicTrainer(object):
         plt.plot(lr, label="lr")
         plt.legend()
         plt.savefig(os.path.join(savedModelDir, "learning_rate.png"))
+        plt.close()
+
+        # Save LostHistory Plot:
+        losses = self.loss_history.get_losses()
+        plt.plot(losses, label="loss")
+        plt.legend()
+        plt.savefig(os.path.join(savedModelDir, "per_batch_loss_history.png"))
         plt.close()
 
     @staticmethod

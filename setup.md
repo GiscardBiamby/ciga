@@ -50,7 +50,7 @@ python process_wiki_imdb_data.py
 # Augment wiki dataset by permantently moving some images from adience->wiki: 
 python augment_data.py
 
-# Process Adience dataset: 
+# Process Adience dataset (optional, we didn't end up needing this for the 194 final proj, we used step 3b instead): 
 python populate_subfolders.py
 
 # Create merged & augmented imdb+wiki dataset: 

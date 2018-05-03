@@ -13,7 +13,7 @@ import keras
 
 ENABLE_SMS = False
 ENABLE_CHECKPOINTS = False
-
+TEST_MODE = False
 
 def train(
         dataset_path
@@ -65,62 +65,66 @@ def train(
 
 
 def trainToConvergence():
-    dataset_path_base = '../datasets/processed/wiki/'
-    epochs = 75
+    if TEST_MODE:
+        dataset_path_base = '../datasets/processed_small/wiki/'
+        epochs = 2
+    else:
+        dataset_path_base = '../datasets/processed/imdbwiki/'
+        epochs = 75
     # List of tuples describing which models to train. Tuple items:
     #   tuple[0]: model_key, AKA some unique string description of the model
     #   tuple[1]: label type. One of the following: "age", "gender", "age_gender"
     #   tuple[2]: trainer_config, a dictionary of hyper params, and other settings used to create and train model.
     models = [
-        ("converge_sameres_age", "age", {"reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":
+        ("converge2_sameres_age", "age", {"reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":
             True},
                       "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
                          "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True})
         ,
-        ("converge_sameres_gender", "gender"
+        ("converge2_sameres_gender", "gender"
            , {
                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
                "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
                               "dense_size": 256, "img_size": 224, "grayscale": True
            })
-        , ("converge_sameres_age_gender", "age_gender"
+        , ("converge2_sameres_age_gender", "age_gender"
            , {
                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
                 "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
                                   "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
            })
 
-        , ("converge_resnet_age", "age"
+        , ("converge2_resnet_age", "age"
            , {
                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
                           "optimizer_params": {"lr": 0.0001}, "batch_size": 200, "stages": 3, "layers": 3,
                "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
            })
-        , ("converge_resnet_gender", "gender"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-               "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 1, "dense": 3,
-               "dense_size": 512, "img_size": 224, "grayscale": True
-           })
-        , ("converge_resnet_age_gender", "age_gender"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-               "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
-                "dense_size": 128, "img_size": 224, "grayscale": True
-          })
-
-        , ("converge_vgg16_age", "age"
-           , {
-                "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
-                "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
-           })
-        , ("converge_vgg16_gender", "gender"
-           , {
-               "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.95, "nesterov": True}, "batch_size":
-                80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
-           })
+        # , ("converge2_resnet_gender", "gender"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+        #        "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 1, "dense": 3,
+        #        "dense_size": 512, "img_size": 224, "grayscale": True
+        #    })
+        # , ("converge2_resnet_age_gender", "age_gender"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #        "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
+        #         "dense_size": 128, "img_size": 224, "grayscale": True
+        #   })
+        #
+        # , ("converge2_vgg16_age", "age"
+        #    , {
+        #         "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
+        #         "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
+        #    })
+        # , ("converge2_vgg16_gender", "gender"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.95, "nesterov": True}, "batch_size":
+        #         80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
+        #    })
         # , ("vgg16_age_gender", "age_gender"
         #    ,
         #    )
@@ -131,7 +135,7 @@ def trainToConvergence():
 
     for model_key, split, trainer_config in models:
         dataset_path = dataset_path_base + split + "/"
-        print('Running %d/%d' % (i, total))
+        print('Traning model %d/%d (%s) to convergence...' % (i, total, model_key))
         print('+====================================================================+')
 
         architecture = {}
@@ -141,10 +145,10 @@ def trainToConvergence():
 
         trainer_config["early_stop_patience"] = 9
 
-        # if cigaTraining.configHasAlreadyRun(trainer_config, model_key):
-        #     print("Skipping training for previously run config: ", trainer_config)
-        #     i += 1
-        #     continue
+        if cigaTraining.configHasAlreadyRun(trainer_config, model_key):
+            print("Skipping training for previously run config: ", trainer_config)
+            i += 1
+            continue
 
         print("Starting training w/ config: ", trainer_config)
         train(
