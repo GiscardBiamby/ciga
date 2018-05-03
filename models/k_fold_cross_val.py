@@ -134,58 +134,58 @@ def k_fold_cross_val(dataset,
 def main_2():
 
     model_configs = [
-        ("kfold_sameres_age", "age", "sameres"
-            , "./saved_models/converge_sameres_age val_acc 0.564453125-Sat_28_Apr_2018_22_23_34/converge_sameres_age val_acc 0.564453125-Sat_28_Apr_2018_22_23_34.h5"
+        ("kfold2_sameres_age", "age", "sameres"
+            , "./saved_models/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08.h5"
             , {
                 "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":True},
                 "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
                 "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True
          })
-        , ("kfold_sameres_gender", "gender", "sameres"
-            , "./saved_models/converge_sameres_gender-val_acc-0.907906-Sun_29_Apr_2018_04_10_19/converge_sameres_gender-val_acc-0.907906-Sun_29_Apr_2018_04_10_19.h5"
+        , ("kfold2_sameres_gender", "gender", "sameres"
+            , "./saved_models/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53.h5"
             , {
                 "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
                 "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
                 "dense_size": 256, "img_size": 224, "grayscale": True
            })
-        , ("kfold_sameres_age_gender", "age_gender", "sameres"
-            , "./saved_models/converge_sameres_age_gender-val_acc-0.552598-Sun_29_Apr_2018_13_13_33/converge_sameres_age_gender-val_acc-0.552598-Sun_29_Apr_2018_13_13_33.h5"
+        , ("kfold2_sameres_age_gender", "age_gender", "sameres"
+            , "./saved_models/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57.h5"
             , {
              "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
                 "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
              "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
          })
-        , ("kfold_resnet_age", "age", "resnet"
-           , "./saved_models/converge_resnet_age-val_acc-0.556875-Sun_29_Apr_2018_06_46_40/converge_resnet_age-val_acc-0.556875-Sun_29_Apr_2018_06_46_40.h5"
+        , ("kfold2_resnet_age", "age", "resnet"
+           , "./saved_models/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17.h5"
            , {
                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
                           "optimizer_params": {"lr": 0.0001}, "batch_size": 200, "stages": 3, "layers": 3,
                "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
            })
-        , ("kfold_resnet_gender", "gender", "resnet"
-           , "./saved_models/converge_resnet_gender-val_acc-0.910389-Sun_29_Apr_2018_10_45_04/converge_resnet_gender-val_acc-0.910389-Sun_29_Apr_2018_10_45_04.h5"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-               "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 2, "layers": 1, "dense": 3,
-               "dense_size": 512, "img_size": 224, "grayscale": True
-           })
-        , ("kfold_resnet_age_gender", "age_gender", "resnet"
-           , "./saved_models/converge_resnet_age_gender-val_acc-0.549659-Sun_29_Apr_2018_15_18_05/converge_resnet_age_gender-val_acc-0.549659-Sun_29_Apr_2018_15_18_05.h5"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
-               "dense_size": 128, "img_size": 224, "grayscale": True
-           })
-        , ("kfold_vgg16_age", "age", "vgg-16"
-           , "./saved_models/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01.h5"
-           , {
-               "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
-               "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
-           })
+        # , ("kfold2_resnet_gender", "gender", "resnet"
+        #    , "./saved_models/converge_resnet_gender-val_acc-0.910389-Sun_29_Apr_2018_10_45_04/converge_resnet_gender-val_acc-0.910389-Sun_29_Apr_2018_10_45_04.h5"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+        #        "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 2, "layers": 1, "dense": 3,
+        #        "dense_size": 512, "img_size": 224, "grayscale": True
+        #    })
+        # , ("kfold2_resnet_age_gender", "age_gender", "resnet"
+        #    , "./saved_models/converge_resnet_age_gender-val_acc-0.549659-Sun_29_Apr_2018_15_18_05/converge_resnet_age_gender-val_acc-0.549659-Sun_29_Apr_2018_15_18_05.h5"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #         "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
+        #        "dense_size": 128, "img_size": 224, "grayscale": True
+        #    })
+        # , ("kfold2_vgg16_age", "age", "vgg-16"
+        #    , "./saved_models/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01.h5"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
+        #        "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
+        #    })
 
 
-        # , ("kfold_vgg16_gender", "gender", "vgg-16"
+        # , ("kfold2_vgg16_gender", "gender", "vgg-16"
         #    , "./saved_models//.h5"
         #    , {
         #        "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
@@ -193,7 +193,7 @@ def main_2():
         #        "batch_size":
         #            80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
         #    })
-        # , ("kfold_vgg16_age_gender", "age_gender", "vgg-16"
+        # , ("kfold2_vgg16_age_gender", "age_gender", "vgg-16"
         #    , "./saved_models//.h5"
         #    ,
         #    )
