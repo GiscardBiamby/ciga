@@ -29,8 +29,8 @@ def k_fold_cross_val(dataset,
     print('+====================================================================+')
     num_channels = 1 if grayscale else 3
     img_shape = (img_size, img_size, num_channels)
-    fold_paths = "../datasets/processed/" + dataset + "/" + label_type + "_fold_"
-    fold_paths = [fold_paths + str(i) + "/" for i in range(1, k+1)]
+    fold_paths = "../datasets/processed_test/" + dataset + "/" + label_type + "_fold_"
+    fold_paths = [fold_paths + str(i) + "/" for i in range(k)]
 
     # Build k data generators:
     train_generators, validation_generators = [], []
@@ -109,7 +109,7 @@ def k_fold_cross_val(dataset,
 
         # Save:
         trainers[i].saveModel(
-            'kfolds-{}-{}-fold{}-val_acc-{:.6f}'.format(
+            'kfolds2-{}-{}-fold{}-val_acc-{:.6f}'.format(
                 model_type
                 , label_type
                 , i+1
@@ -134,32 +134,32 @@ def k_fold_cross_val(dataset,
 def main_2():
 
     model_configs = [
-        ("kfold2_sameres_age", "age", "sameres"
-            , "./saved_models/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08.h5"
-            , {
-                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":True},
-                "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
-                "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True
-         })
-        , ("kfold2_sameres_gender", "gender", "sameres"
-            , "./saved_models/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53.h5"
-            , {
-                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-                "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
-                "dense_size": 256, "img_size": 224, "grayscale": True
-           })
-        , ("kfold2_sameres_age_gender", "age_gender", "sameres"
-            , "./saved_models/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57.h5"
-            , {
-             "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
-             "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
-         })
+        # ("kfold2_sameres_age", "age", "sameres"
+        #     , "./saved_models/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08.h5"
+        #     , {
+        #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":True},
+        #         "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
+        #         "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True
+        #  })
+        # , ("kfold2_sameres_gender", "gender", "sameres"
+        #     , "./saved_models/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53.h5"
+        #     , {
+        #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+        #         "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
+        #         "dense_size": 256, "img_size": 224, "grayscale": True
+        #    })
+        # , ("kfold2_sameres_age_gender", "age_gender", "sameres"
+        #     , "./saved_models/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57.h5"
+        #     , {
+        #      "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #         "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
+        #      "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
+        #  })
         , ("kfold2_resnet_age", "age", "resnet"
            , "./saved_models/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17.h5"
            , {
                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-                          "optimizer_params": {"lr": 0.0001}, "batch_size": 200, "stages": 3, "layers": 3,
+                          "optimizer_params": {"lr": 0.0001}, "batch_size": 128, "stages": 3, "layers": 3,
                "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
            })
         # , ("kfold2_resnet_gender", "gender", "resnet"
@@ -202,7 +202,7 @@ def main_2():
     dataset = "adience"
     grayscale = True
     img_size = 224
-    epochs = 30
+    epochs = 40
     K = 5
 
     for model_name, label_type, model_type, weights_path, trainer_config in model_configs:

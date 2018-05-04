@@ -81,37 +81,37 @@ def trainToConvergence():
     #   tuple[1]: label type. One of the following: "age", "gender", "age_gender"
     #   tuple[2]: trainer_config, a dictionary of hyper params, and other settings used to create and train model.
     models = [
-        ("converge2_sameres_age", "age", {"reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":
-            True},
-                      "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
-                         "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True})
-        ,
-        ("converge2_sameres_gender", "gender"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-               "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
-                              "dense_size": 256, "img_size": 224, "grayscale": True
-           })
-        , ("converge2_sameres_age_gender", "age_gender"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
-                                  "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
-           })
-
-        , ("converge2_resnet_age", "age"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-                          "optimizer_params": {"lr": 0.0001}, "batch_size": 200, "stages": 3, "layers": 3,
-               "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
-           })
-        # , ("converge2_resnet_gender", "gender"
+        # ("converge2_sameres_age", "age", {"reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":
+        #     True},
+        #               "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
+        #                  "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True})
+        # ,
+        # ("converge2_sameres_gender", "gender"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+        #        "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
+        #                       "dense_size": 256, "img_size": 224, "grayscale": True
+        #    })
+        # , ("converge2_sameres_age_gender", "age_gender"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #         "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
+        #                           "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
+        #    })
+        #
+        # , ("converge2_resnet_age", "age"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+        #                   "optimizer_params": {"lr": 0.0001}, "batch_size": 200, "stages": 3, "layers": 3,
+        #        "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
+        #    })
+        # ("converge2_resnet_gender", "gender"
         #    , {
         #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
         #        "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 1, "dense": 3,
         #        "dense_size": 512, "img_size": 224, "grayscale": True
         #    })
-        # , ("converge2_resnet_age_gender", "age_gender"
+        # ("converge2_resnet_age_gender", "age_gender"
         #    , {
         #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
         #        "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
@@ -124,12 +124,13 @@ def trainToConvergence():
         #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
         #         "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
         #    })
-        # , ("converge2_vgg16_gender", "gender"
-        #    , {
-        #        "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-        #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.95, "nesterov": True}, "batch_size":
-        #         80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
-        #    })
+        ("converge2_vgg16_gender", "gender"
+           , {
+               "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "sgd", "optimizer_params": {"lr": 0.100000001, "decay": 0.005, "momentum": 0.95, "nesterov": True},
+             "batch_size":
+                80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
+           })
         # , ("vgg16_age_gender", "age_gender"
         #    ,
         #    )
