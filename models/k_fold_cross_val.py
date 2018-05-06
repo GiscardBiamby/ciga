@@ -13,9 +13,11 @@ from keras import optimizers
 from keras import backend as K
 from testing.confusion_mtx import *
 import copy
+import gc
 
-def k_fold_cross_val(dataset,
-                     k,
+TEST_MODE = False
+
+def k_fold_cross_val(k,
                      label_type,
                      model_type,
                      trainer_config,
@@ -23,99 +25,45 @@ def k_fold_cross_val(dataset,
                      img_size=50,
                      batch_size=32,
                      grayscale=True,
-                     weights=None,
                      architecture=None,
-                     model=None):
-    print('+====================================================================+')
-    num_channels = 1 if grayscale else 3
-    img_shape = (img_size, img_size, num_channels)
-    fold_paths = "../datasets/processed_test/" + dataset + "/" + label_type + "_fold_"
-    fold_paths = [fold_paths + str(i) + "/" for i in range(k)]
-
-    # Build k data generators:
-    train_generators, validation_generators = [], []
-    for i in range(k):
-        train, valid = cigaTraining.generatorsBuilder(
-            fold_paths[i], img_dims=(img_size, img_size), batch_size=batch_size, grayscale=grayscale)
-        train_generators += [train]
-        validation_generators += [valid]
-    num_classes = train.num_classes
-
-    # Build or load k Models:
-    if model:
-        models = []
-        for _ in range(k):
-            print("Loading weights: '{}'".format(model))
-            models.append(keras.models.load_model(
-                model
-                , custom_objects={'off_by_one_categorical_accuracy': cigaTraining.off_by_one_categorical_accuracy})
-            )
-    else:
-        models = []
-        if model_type == 'vgg-16':
-            models = [vgg.getModel_vgg16(img_shape, num_classes) for _ in range(k)]
-        elif model_type == 'sameres':
-            models = [andreynet.AndreyNet(architecture, img_shape, num_classes) for _ in range(k)]
-        elif model_type == 'resnet':
-            models = [resnet.resnetBuilder(architecture, img_shape, num_classes) for _ in range(k)]
-
-        # Load pretrained weights:
-        if weights:
-            for i in range(k):
-                print("Loading weights: '{}'".format(weights))
-                models[i].load_weights(weights, by_name=False)
+                     weights_path=None,
+                     results=None):
 
     # Var to store val_acc and off-by-one-acc:
-    results = np.zeros((k,4))
+    if results is None:
+        results = np.zeros((k,4))
+
+    print('+====================================================================+')
+    num_channels = 1 if grayscale else 3
+    img_shape = (img_size, img_size)
+    if TEST_MODE:
+        fold_paths = "../datasets/processed_small/adience/" + label_type + "_fold_"
+    else:
+        fold_paths = "../datasets/processed_test/adience/" + label_type + "_fold_"
+    fold_paths = [fold_paths + str(i) + "/" for i in range(k)]
 
     # Train k models:
-    trainers = []
+    total_confusion_mat = None
     for i in range(k):
-        trainer_config_i = copy.deepcopy(trainer_config)
-        trainer_config_i["fold_num"] = i
-        trainer_config_i["kfolds_k"] = k
-        trainers.append(cigaTraining.BasicTrainer(model=models[i], config=trainer_config_i,
-                                                 enable_sms=False))
-        print("Training fold {}/{}...".format(i+1, k))
-        try:
-            trainers[i].train(
-                validation_generators[i]
-                , train_generators[i]
-                , batch_size=batch_size
-                , epochs=epochs
-            )
-        except Exception as e:
-            print("ERROR while training model w/ config: ", trainer_config)
-            print("Error: ", e)
-            # Save to prevent trying to re-run same config again:
-            trainers[i].saveModel(
-                'kfolds-{}-{}-fold{}-val_acc-ERROR'.format(
-                    model_type
-                    , label_type
-                    , i + 1
-                )
-                , saveConfigOnly=True
-            )
-            continue
-
-        # Capture curr. fold results:
-        best_index = np.argmax(np.array(models[i].history.history['val_acc']), axis=0)
-        results[i,0] = models[i].history.history['acc'][best_index]
-        if "off_by_one_categorical_accuracy" in models[i].history.history:
-            results[i, 1] = models[i].history.history['off_by_one_categorical_accuracy'][best_index]
-        results[i,2] = models[i].history.history['val_acc'][best_index]
-        if "val_off_by_one_categorical_accuracy" in models[i].history.history:
-            results[i, 3] = models[i].history.history['val_off_by_one_categorical_accuracy'][best_index]
-
-        # Save:
-        trainers[i].saveModel(
-            'kfolds2-{}-{}-fold{}-val_acc-{:.6f}'.format(
-                model_type
-                , label_type
-                , i+1
-                , max(models[i].history.history['val_acc'])
-            )
+        confusion_mat, valid_generator, saved_model_dir = fit_and_eval_fold(
+            weights_path
+            , architecture
+            , fold_paths
+            , img_shape
+            , grayscale
+            , batch_size
+            , epochs
+            , i
+            , k
+            , label_type
+            , model_type
+            , results
+            , trainer_config
         )
+        if i == 0:
+            total_confusion_mat = confusion_mat
+        else:
+            total_confusion_mat += confusion_mat
 
     # Print k-fold results:
     avg_results = np.average(results, axis=0)
@@ -125,93 +73,258 @@ def k_fold_cross_val(dataset,
     print("Fold Details (acc, off_by_1_acc, val_acc, val_off_by_1_acc): ")
     print(results)
 
-    # Generate k+1 confusion matrices (+1 for matrix across all folds):
-    confusion_mtx(models, validation_generators, model_name=model_type, label_type=label_type, k=k)
+    label_dct = dict((v, k) for k, v in valid_generator.class_indices.items())
+    confusion_save_path = os.path.join(saved_model_dir, "confusion_mtx_all_%d_folds.png" % k)
+    plot_confusion(total_confusion_mat, confusion_save_path, label_dct)
     print()
+
+
+def fit_and_eval_fold(
+        model
+        , architecture
+        , fold_paths
+        , img_shape
+        , grayscale
+        , batch_size
+        , epochs
+        , i
+        , k
+        , label_type
+        , model_type
+        , results
+        , trainer_config
+):
+
+    # Try to deal w/ GPU OOM errors:
+    gc.collect()
+    cigaTraining.BasicTrainer.clearGpuSession()
+
+    ## Data generators:
+    print("Fold data path: ", fold_paths[i])
+    train_generator, valid_generator = cigaTraining.generatorsBuilder(
+        fold_paths[i]
+        , img_dims=img_shape
+        , batch_size=batch_size
+        , grayscale=grayscale
+    )
+    num_classes = train_generator.num_classes
+    if train_generator.num_classes != valid_generator.num_classes:
+        raise ValueError(
+            "Expected num_classes for both train_generator and valid_generator to be equal, but got: {}, and {}".format(
+                train_generator.num_classes
+                , valid_generator.num_classes
+        ))
+
+    ## Build or load Model:
+    if model:
+        print("Loading weights: '{}'".format(model))
+        model = keras.models.load_model(
+            model
+            , custom_objects={'off_by_one_categorical_accuracy': cigaTraining.off_by_one_categorical_accuracy}
+        )
+    else:
+        if model_type == 'vgg-16':
+            model = vgg.getModel_vgg16(img_shape, num_classes)
+        elif model_type == 'sameres':
+            model = andreynet.AndreyNet(architecture, img_shape, num_classes)
+        elif model_type == 'resnet':
+            model = resnet.resnetBuilder(architecture, img_shape, num_classes)
+
+    ## Train:
+    trainer_config_i = copy.deepcopy(trainer_config)
+    trainer_config_i["fold_num"] = i
+    trainer_config_i["kfolds_k"] = k
+    trainer = cigaTraining.BasicTrainer(
+        model=model
+        , config=trainer_config_i
+        , enable_sms=False
+    )
+    print("Training fold {}/{}...".format(i + 1, k))
+    try:
+        print(train_generator)
+        trainer.train(
+            valid_generator
+            , train_generator
+            , batch_size=batch_size
+            , epochs=epochs
+        )
+    except Exception as e:
+        print("ERROR while training model w/ config: ", trainer_config)
+        print("Error: ", e)
+        # Save to prevent trying to re-run same config again:
+        trainer.saveModel(
+            'kfolds2-{}-{}-fold{}-val_acc-ERROR'.format(
+                model_type
+                , label_type
+                , i + 1
+            )
+            , saveConfigOnly=True
+        )
+        raise
+
+    # Capture curr. fold results:
+    best_index = np.argmax(np.array(model.history.history['val_acc']), axis=0)
+    results[i, 0] = model.history.history['acc'][best_index]
+    if "off_by_one_categorical_accuracy" in model.history.history:
+        results[i, 1] = model.history.history['off_by_one_categorical_accuracy'][best_index]
+    results[i, 2] = model.history.history['val_acc'][best_index]
+    if "val_off_by_one_categorical_accuracy" in model.history.history:
+        results[i, 3] = model.history.history['val_off_by_one_categorical_accuracy'][best_index]
+
+
+    # Save:
+    model_name = 'kfolds2-{}-{}-fold{}-val_acc-{:.6f}'.format(
+        model_type
+        , label_type
+        , i + 1
+        , max(model.history.history['val_acc'])
+    )
+    saved_model_dir = trainer.saveModel(model_name)
+
+    # Generate Confusion Matrix:
+    confusion_mat = confusion_mtx2(model, valid_generator, saved_model_dir, fold_num=i)
+
+    # Try to deal w/ GPU OOM errors:
+    del model
+    del trainer
+    gc.collect()
+    cigaTraining.BasicTrainer.clearGpuSession()
+
+    return confusion_mat, valid_generator, saved_model_dir
 
 
 # Can remove this later, only adding it so i can run this script from my IDE
 def main_2():
 
     model_configs = [
+
+        ## SAMERES
         # ("kfold2_sameres_age", "age", "sameres"
         #     , "./saved_models/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08.h5"
         #     , {
         #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":True},
         #         "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
         #         "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True
-        #  })
-        # , ("kfold2_sameres_gender", "gender", "sameres"
+        #  }, None)
+        # ("kfold2_sameres_gender", "gender", "sameres"
         #     , "./saved_models/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53.h5"
         #     , {
         #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
         #         "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
         #         "dense_size": 256, "img_size": 224, "grayscale": True
-        #    })
-        # , ("kfold2_sameres_age_gender", "age_gender", "sameres"
-        #     , "./saved_models/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57.h5"
-        #     , {
-        #      "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-        #         "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
-        #      "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
-        #  })
-        , ("kfold2_resnet_age", "age", "resnet"
-           , "./saved_models/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17.h5"
-           , {
-               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-                          "optimizer_params": {"lr": 0.0001}, "batch_size": 128, "stages": 3, "layers": 3,
-               "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
-           })
-        # , ("kfold2_resnet_gender", "gender", "resnet"
+        #    }, None)
+        (
+            "kfold2_sameres_age_gender"
+            , "age_gender"
+            , "sameres"
+            , "./saved_models/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
+                "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
+            }
+            , None
+         )
+
+        ## RESNET
+        # ("kfold2_resnet_age", "age", "resnet"
+        #    , "./saved_models/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17.h5"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+        #                   "optimizer_params": {"lr": 0.0001}, "batch_size": 128, "stages": 3, "layers": 3,
+        #        "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
+        #    }, None)
+        # , (
+        #     "kfold2_resnet_gender"
+        #     , "gender"
+        #     , "resnet"
         #    , "./saved_models/converge_resnet_gender-val_acc-0.910389-Sun_29_Apr_2018_10_45_04/converge_resnet_gender-val_acc-0.910389-Sun_29_Apr_2018_10_45_04.h5"
         #    , {
         #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
         #        "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 2, "layers": 1, "dense": 3,
         #        "dense_size": 512, "img_size": 224, "grayscale": True
-        #    })
-        # , ("kfold2_resnet_age_gender", "age_gender", "resnet"
-        #    , "./saved_models/converge_resnet_age_gender-val_acc-0.549659-Sun_29_Apr_2018_15_18_05/converge_resnet_age_gender-val_acc-0.549659-Sun_29_Apr_2018_15_18_05.h5"
-        #    , {
-        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-        #         "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
-        #        "dense_size": 128, "img_size": 224, "grayscale": True
-        #    })
-        # , ("kfold2_vgg16_age", "age", "vgg-16"
-        #    , "./saved_models/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01/converge_vgg16_age-val_acc-0.564628-Sun_29_Apr_2018_22_19_01.h5"
-        #    , {
-        #        "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-        #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
-        #        "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
-        #    })
+        #    }
+        #     , None
+        # )
+        , (
+            "kfold2_resnet_age_gender"
+            , "age_gender"
+            , "resnet"
+            , "./saved_models/converge2_resnet_age_gender-val_acc-0.459219-Fri_04_May_2018_02_26_57/converge2_resnet_age_gender-val_acc-0.459219-Fri_04_May_2018_02_26_57.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
+                "dense_size": 128, "img_size": 224, "grayscale": True
+            }
+            , None
+        )
 
-
-        # , ("kfold2_vgg16_gender", "gender", "vgg-16"
-        #    , "./saved_models//.h5"
-        #    , {
-        #        "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-        #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.95, "nesterov": True},
-        #        "batch_size":
-        #            80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
-        #    })
-        # , ("kfold2_vgg16_age_gender", "age_gender", "vgg-16"
-        #    , "./saved_models//.h5"
-        #    ,
-        #    )
+        ## VGG
+        , (
+            "kfold2_vgg16_age"
+            , "age"
+            , "vgg-16"
+            , "./saved_models/converge2_vgg16_age-val_acc-0.476328-Fri_04_May_2018_04_11_44/converge2_vgg16_age-val_acc-0.476328-Fri_04_May_2018_04_11_44.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
+                "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
+            }
+            , None
+        )
+        , (
+            "kfold2_vgg16_gender"
+            , "gender"
+            , "vgg-16"
+            , "./saved_models/converge2_vgg16_gender-val_acc-0.877338-Fri_04_May_2018_12_33_08/converge2_vgg16_gender-val_acc-0.877338-Fri_04_May_2018_12_33_08.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.95, "nesterov": True},
+                "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
+            }
+            , None
+        )
+        , (
+            "kfold2_vgg16_age_gender"
+            , "age_gender"
+            , "vgg-16"
+            , "./saved_models/converge2_vgg16_age_gender-val_acc-0.401562-Fri_04_May_2018_14_44_24/converge2_vgg16_age_gender-val_acc-0.401562-Fri_04_May_2018_14_44_24.h5"
+            , {
+                "reduce_lr_params": {
+                    "factor": 0.1,
+                    "patience": 3,
+                    "min_lr": 1E-8,
+                    "verbose": True
+                },
+                "optimizer": "sgd",
+                "optimizer_params": {
+                    "lr": 0.1,
+                    "decay": 0.005,
+                    "momentum": 0.85,
+                    "nesterov": True
+                },
+                "batch_size": 80,
+                "img_size": 224,
+                "grayscale": True,
+                "early_stop_patience": 7
+            }
+            , None
+            )
     ]
 
-    dataset = "adience"
     grayscale = True
     img_size = 224
-    epochs = 40
+    epochs = 40 if not TEST_MODE else 1
     K = 5
 
-    for model_name, label_type, model_type, weights_path, trainer_config in model_configs:
+    for model_name, label_type, model_type, weights_path, trainer_config, folds_results in model_configs:
         if "stages" in trainer_config:
             # (IF MODEL == RESNET || MODEL == ANDREYNET) && (not using pre-trained model):
             # Change values in this section for ResNet or AndreyNet architecture variable:
             architecture = {}
             architecture['stages'] = [[trainer_config["layers"], 64*(2**i)] for i in range(trainer_config["stages"])]
             architecture['dense'] = [trainer_config["dense_size"] for i in range(trainer_config["dense"])]
+        print(weights_path)
         print("Running k-folds cv for model_config: {}, label_type: {}, weights_path: '{}'".format(
             model_name
             , label_type
@@ -220,18 +333,18 @@ def main_2():
         trainer_config["early_stop_patience"] = 6
         print("trainer_config: ", trainer_config)
         k_fold_cross_val(
-            dataset,
-            K,
-            label_type,
-            model_type,
-            trainer_config,
-            epochs=epochs,
-            img_size=img_size,
-            batch_size=trainer_config["batch_size"],
-            grayscale=grayscale,
-            architecture=architecture,
-            model=weights_path
+            K
+            , label_type
+            , model_type
+            , trainer_config
+            , epochs=epochs
+            , img_size=img_size
+            , batch_size=trainer_config["batch_size"]
+            , grayscale=grayscale
+            , architecture=architecture
+            , weights_path=weights_path
         )
+
 
 if __name__ == '__main__':
     # main()

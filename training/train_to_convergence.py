@@ -124,16 +124,19 @@ def trainToConvergence():
         #         "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.85001, "nesterov": True},
         #         "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
         #    })
-        ("converge2_vgg16_gender", "gender"
-           , {
-               "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "sgd", "optimizer_params": {"lr": 0.100000001, "decay": 0.005, "momentum": 0.95, "nesterov": True},
-             "batch_size":
-                80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
-           })
-        # , ("vgg16_age_gender", "age_gender"
-        #    ,
-        #    )
+        # ("converge2_vgg16_gender", "gender"
+        #    , {
+        #        "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+        #         "sgd", "optimizer_params": {"lr": 0.100000001, "decay": 0.005, "momentum": 0.95, "nesterov": True},
+        #      "batch_size":
+        #         80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
+        #    })
+        ("converge2_vgg16_age_gender", "age_gender"
+            , {
+                "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.9, "nesterov": True},
+                "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 9
+            })
     ]
 
     i = 1

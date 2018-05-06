@@ -176,8 +176,10 @@ class BasicTrainer(object):
         num_valid = validation_generator.samples
         num_train = train_generator.samples
 
-        # Default to Adam if config doesn't specify an optimizer:
+        print("Num valid: ", num_valid)
+        print("Num train: ", num_train)
 
+        # Default to Adam if config doesn't specify an optimizer:
         optimizer = "adam"
         if ("optimizer" in self.config and self.config["optimizer"] is not None):
             if self.config["optimizer"] == "adam":
@@ -264,6 +266,7 @@ class BasicTrainer(object):
         #   import pickle
         #   batch_hist = pickle.load(open("./models/saved_models/your_model_name/batch_loss_history.pickle", "rb"))
 
+        return savedModelDir
 
     def saveTrainingPlots(self, savedModelDir):
         """
