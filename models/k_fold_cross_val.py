@@ -199,93 +199,96 @@ def main_2():
     model_configs = [
 
         ## SAMERES
-        # ("kfold2_sameres_age", "age", "sameres"
-        #     , "./saved_models/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08.h5"
-        #     , {
-        #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":True},
-        #         "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
-        #         "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True
-        #  }, None)
-        # ("kfold2_sameres_gender", "gender", "sameres"
-        #     , "./saved_models/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53.h5"
-        #     , {
-        #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-        #         "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
-        #         "dense_size": 256, "img_size": 224, "grayscale": True
-        #    }, None)
-        # (
-        #     "kfold2_sameres_age_gender"
-        #     , "age_gender"
-        #     , "sameres"
-        #     , "./saved_models/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57.h5"
-        #     , {
-        #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-        #         "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
-        #         "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
-        #     }
-        #     , None
-        #  )
+        (
+            "kfold2_sameres_age", "age", "sameres"
+            , "./saved_models/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08/converge2_sameres_age-val_acc-0.470703-Thu_03_May_2018_02_02_08.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose":True},
+                "optimizer": "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 3,
+                "layers": 3, "dense": 2, "dense_size": 256, "img_size": 224, "grayscale": True
+         }, None)
+        , (
+            "kfold2_sameres_gender", "gender", "sameres"
+            , "./saved_models/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53/converge2_sameres_gender-val_acc-0.875381-Thu_03_May_2018_03_48_53.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+                "optimizer_params": {"lr": 0.00015}, "batch_size": 64, "stages": 4, "layers": 2, "dense": 2,
+                "dense_size": 256, "img_size": 224, "grayscale": True
+           }, None)
+        , (
+            "kfold2_sameres_age_gender"
+            , "age_gender"
+            , "sameres"
+            , "./saved_models/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57/converge2_sameres_age_gender-val_acc-0.437812-Thu_03_May_2018_04_46_57.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 256, "stages": 3, "layers": 2,
+                "dense": 1, "dense_size": 512, "img_size": 224, "grayscale": True
+            }
+            , None
+         )
 
         ## RESNET
-        # ("kfold2_resnet_age", "age", "resnet"
-        #    , "./saved_models/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17.h5"
-        #    , {
-        #        "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
-        #                   "optimizer_params": {"lr": 0.0001}, "batch_size": 128, "stages": 3, "layers": 3,
-        #        "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
-        #    }, None)
+        (
+            "kfold2_resnet_age", "age", "resnet"
+            , "./saved_models/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17/converge2_resnet_age-val_acc-0.442578-Thu_03_May_2018_05_53_17.h5"
+            , {
+               "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
+                          "optimizer_params": {"lr": 0.0001}, "batch_size": 128, "stages": 3, "layers": 3,
+               "dense": 2, "dense_size": 512, "img_size": 224, "grayscale": True
+           }, None)
         (
             "kfold2_resnet_gender"
             , "gender"
             , "resnet"
-           , "./saved_models/converge2_resnet_gender-val_acc-0.880383-Thu_03_May_2018_20_19_38/converge2_resnet_gender-val_acc-0.880383-Thu_03_May_2018_20_19_38.h5"
+            , "./saved_models/converge2_resnet_gender-val_acc-0.880383-Thu_03_May_2018_20_19_38/converge2_resnet_gender-val_acc-0.880383-Thu_03_May_2018_20_19_38.h5"
            , {
                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08}, "optimizer": "adam",
                "optimizer_params": {"lr": 0.001}, "batch_size": 128, "stages": 2, "layers": 1, "dense": 3,
-               "dense_size": 512, "img_size": 224, "grayscale": True
+               "dense_size": 512, "img_size": 224, "grayscale": True, "early_stop_patience": 7
            }
             , None
         )
-        # , (
-        #     "kfold2_resnet_age_gender"
-        #     , "age_gender"
-        #     , "resnet"
-        #     , "./saved_models/converge2_resnet_age_gender-val_acc-0.459219-Fri_04_May_2018_02_26_57/converge2_resnet_age_gender-val_acc-0.459219-Fri_04_May_2018_02_26_57.h5"
-        #     , {
-        #         "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-        #         "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
-        #         "dense_size": 128, "img_size": 224, "grayscale": True
-        #     }
-        #     , None
-        # )
+        , (
+            "kfold2_resnet_age_gender"
+            , "age_gender"
+            , "resnet"
+            , "./saved_models/converge2_resnet_age_gender-val_acc-0.459219-Fri_04_May_2018_02_26_57/converge2_resnet_age_gender-val_acc-0.459219-Fri_04_May_2018_02_26_57.h5"
+            , {
+                "reduce_lr_params": {"factor": 0.2, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
+                "adam", "optimizer_params": {"lr": 0.001}, "batch_size": 64, "stages": 2, "layers": 3, "dense": 2,
+                "dense_size": 128, "img_size": 224, "grayscale": True
+            }
+            , None
+        )
 
         ## VGG
-        # (
-        #     "kfold2_vgg16_age"
-        #     , "age"
-        #     , "vgg-16"
-        #     , "./saved_models/converge2_vgg16_age-val_acc-0.476328-Fri_04_May_2018_04_11_44/converge2_vgg16_age-val_acc-0.476328-Fri_04_May_2018_04_11_44.h5"
-        #     , {
-        #       "reduce_lr_params": {
-        #         "factor": 0.1,
-        #         "patience": 3,
-        #         "min_lr": 1E-8,
-        #         "verbose": True
-        #       },
-        #       "optimizer": "sgd",
-        #       "optimizer_params": {
-        #         "lr": 0.001,
-        #         "decay": 0.005,
-        #         "momentum": 0.85,
-        #         "nesterov": True
-        #       },
-        #       "batch_size": 100,
-        #       "img_size": 224,
-        #       "grayscale": True,
-        #       "early_stop_patience": 6
-        #     }
-        #     , None
-        # )
+        (
+            "kfold2_vgg16_age"
+            , "age"
+            , "vgg-16"
+            , "./saved_models/converge2_vgg16_age-val_acc-0.476328-Fri_04_May_2018_04_11_44/converge2_vgg16_age-val_acc-0.476328-Fri_04_May_2018_04_11_44.h5"
+            , {
+              "reduce_lr_params": {
+                "factor": 0.1,
+                "patience": 3,
+                "min_lr": 1E-8,
+                "verbose": True
+              },
+              "optimizer": "sgd",
+              "optimizer_params": {
+                "lr": 0.001,
+                "decay": 0.005,
+                "momentum": 0.85,
+                "nesterov": True
+              },
+              "batch_size": 100,
+              "img_size": 224,
+              "grayscale": True,
+              "early_stop_patience": 6
+            }
+            , None
+        )
         , (
             "kfold2_vgg16_gender"
             , "gender"
@@ -293,8 +296,8 @@ def main_2():
             , "./saved_models/converge2_vgg16_gender-val_acc-0.877338-Fri_04_May_2018_12_33_08/converge2_vgg16_gender-val_acc-0.877338-Fri_04_May_2018_12_33_08.h5"
             , {
                 "reduce_lr_params": {"factor": 0.1, "patience": 3, "min_lr": 1e-08, "verbose": True}, "optimizer":
-                "sgd", "optimizer_params": {"lr": 0.1, "decay": 0.005, "momentum": 0.95, "nesterov": True},
-                "batch_size": 80, "img_size": 224, "grayscale": True, "early_stop_patience": 7
+                "sgd", "optimizer_params": {"lr": 0.001, "decay": 0.005, "momentum": 0.95, "nesterov": True},
+                "batch_size": 90, "img_size": 224, "grayscale": True, "early_stop_patience": 7
             }
             , None
         )
@@ -312,12 +315,12 @@ def main_2():
                 },
                 "optimizer": "sgd",
                 "optimizer_params": {
-                    "lr": 0.1,
+                    "lr": 0.001,
                     "decay": 0.005,
                     "momentum": 0.85,
                     "nesterov": True
                 },
-                "batch_size": 80,
+                "batch_size": 90,
                 "img_size": 224,
                 "grayscale": True,
                 "early_stop_patience": 7
